@@ -1,0 +1,20 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "publisher": "obox",
+  "description": "应用网格：列出所有注册了 app 的扩展",
+  "main": "extension.py",
+  "icon": "main.svg",
+  "activationEvents": [
+    "onStartup"
+  ],
+  "contributes": {
+    "views": [
+      {
+        "id": "app.main",
+        "name": "应用",
+        "container": "sidebar"
+      }
+    ]
+  }
+}

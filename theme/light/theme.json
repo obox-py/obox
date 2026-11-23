@@ -1,0 +1,7 @@
+{
+  "name": "light",
+  "version": "1.0.0",
+  "mode": "light",
+  "entry": "create_ui_provider",
+  "contract": 1
+}

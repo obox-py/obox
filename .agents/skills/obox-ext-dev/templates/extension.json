@@ -1,0 +1,14 @@
+{
+  "name": "__NAME__",
+  "version": "0.1.0",
+  "publisher": "__PUBLISHER__",
+  "description": "__TITLE__",
+  "main": "extension.py",
+  "icon": "main.svg",
+  "activationEvents": ["onStartup"],
+  "contributes": {
+    "views": [
+      {"id": "__NAME__.main", "name": "__TITLE__", "container": "sidebar"}
+    ]
+  }
+}

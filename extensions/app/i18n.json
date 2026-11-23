@@ -1,0 +1,32 @@
+{
+  "apps.title": [
+    {
+      "lang": "zh-CN",
+      "value": "应用"
+    },
+    {
+      "lang": "en-US",
+      "value": "App"
+    }
+  ],
+  "apps.empty": [
+    {
+      "lang": "zh-CN",
+      "value": "还没有应用：扩展在 extension.json 里声明 contributes.app 后会出现在这里。"
+    },
+    {
+      "lang": "en-US",
+      "value": "No apps yet: extensions appear here after declaring contributes.app."
+    }
+  ],
+  "apps.search": [
+    {
+      "lang": "zh-CN",
+      "value": "搜索应用"
+    },
+    {
+      "lang": "en-US",
+      "value": "Search apps"
+    }
+  ]
+}

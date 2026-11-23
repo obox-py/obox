@@ -1,0 +1,25 @@
+ <Div id="ext-root">
+  <Text id="ext-title" text="{{i18n.title}}" />
+  <Flex id="ext-toolbar" direction="row" align="center" gap="12">
+    <Button id="ext-install" type="primary" text="{{i18n.install}}" on_click="true" />
+    <Input id="ext-search" placeholder="{{i18n.search}}" on_input="true" grow="1" />
+  </Flex>
+  <Div id="ext-empty" o-if="!items.length">
+    <Text id="ext-empty-text" text="{{i18n.empty}}" />
+  </Div>
+  <Div id="ext-list">
+    <Card id="ext-card-{{item.id}}" value="{{item.id}}" o-for="item in items">
+      <Flex id="ext-row-{{item.id}}" direction="row" align="center" gap="12">
+        <Div id="ext-text-{{item.id}}" grow="1">
+          <Text id="ext-name-{{item.id}}" text="{{item.title}}" size="15" />
+          <Text id="ext-meta-{{item.id}}" text="{{item.meta}}" size="12" />
+        </Div>
+        <Text id="ext-status-{{item.id}}" text="{{item.status}}" size="12" />
+        <Flex id="ext-actions-{{item.id}}" direction="row" gap="8" o-if="item.removable">
+          <Button id="ext-toggle-{{item.id}}" text="{{item.toggle}}" on_click="true" />
+          <Button id="ext-remove-{{item.id}}" type="danger" text="{{i18n.remove}}" on_click="true" />
+        </Flex>
+      </Flex>
+    </Card>
+  </Div>
+</Div>

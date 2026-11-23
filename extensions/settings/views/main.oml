@@ -1,0 +1,20 @@
+<Div id="settings-root">
+  <Text id="settings-title" text="{{i18n.settings.title}}" size="20" />
+  <Input id="settings-search" placeholder="{{i18n.settings.search}}" on_input="true" />
+  <Flex id="settings-body" direction="row" gap="24" align="start">
+    <Div id="settings-groups" width="180">
+      <NavItem id="group-{{group.id}}" value="{{group.id}}" text="{{group.title}}" selected="{{group.selected}}" o-for="group in groups" on_click="true" />
+    </Div>
+    <Div id="settings-items" grow="1">
+      <Text id="settings-group-title" text="{{currentTitle}}" size="20" />
+      <Div id="item-{{item.key}}" o-for="item in items">
+        <Text id="item-title-{{item.key}}" text="{{item.title}}" size="14" />
+        <Text id="item-desc-{{item.key}}" text="{{item.description}}" size="12" />
+        <Switch id="item-bool-{{item.key}}" o-if="item.type == 'bool'" checked="{{item.checked}}" on_checkedchange="true" />
+        <Select id="item-enum-{{item.key}}" o-if="item.type == 'enum'" options="{{item.options}}" value="{{item.value}}" on_change="true" />
+        <Input id="item-string-{{item.key}}" o-if="item.type == 'string'" value="{{item.value}}" on_input="true" />
+        <Text id="item-label-{{item.key}}" o-if="item.type == 'label'" text="{{item.value}}" size="14" />
+      </Div>
+    </Div>
+  </Flex>
+</Div>

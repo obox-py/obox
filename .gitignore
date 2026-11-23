@@ -1,0 +1,18 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# obox runtime, build outputs and tool caches
+.obox/
+.theme/
+.pytest_cache/
+tmptmp/
+tmp/
+.gitoken

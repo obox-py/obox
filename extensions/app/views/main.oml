@@ -1,0 +1,19 @@
+<Div id="apps-root">
+  <Text id="apps-title" text="{{i18n.apps.title}}" />
+  <Input id="app-search" placeholder="{{i18n.apps.search}}" on_input="true" />
+  <Div id="apps-empty" o-if="!apps.length">
+    <Text id="apps-empty-text" text="{{i18n.apps.empty}}" />
+  </Div>
+  <Flex id="apps-grid" direction="row" wrap="wrap" gap="16">
+    <Card id="app-card-{{app.id}}" value="{{app.id}}" o-for="app in apps" on_click="true" grow="1">
+      <Flex id="app-row-{{app.id}}" direction="row" align="center" gap="12">
+        <Image id="app-icon-{{app.id}}" src="{{app.icon}}" width="28" height="28" />
+        <Div id="app-text-{{app.id}}">
+          <Text id="app-name-{{app.id}}" text="{{app.title}}" size="15" />
+          <Text id="app-meta-{{app.id}}" text="{{app.meta}}" size="12" />
+        </Div>
+      </Flex>
+      <Text id="app-desc-{{app.id}}" text="{{app.description}}" size="13" />
+    </Card>
+  </Flex>
+</Div>

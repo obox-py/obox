@@ -1,0 +1,26 @@
+{
+  "title": [
+    {"lang": "zh-CN", "value": "扩展"},
+    {"lang": "en-US", "value": "Extensions"}
+  ],
+  "install": [
+    {"lang": "zh-CN", "value": "安装扩展"},
+    {"lang": "en-US", "value": "Install extension"}
+  ],
+  "search": [
+    {"lang": "zh-CN", "value": "搜索扩展"},
+    {"lang": "en-US", "value": "Search extensions"}
+  ],
+  "empty": [
+    {"lang": "zh-CN", "value": "没有匹配的扩展"},
+    {"lang": "en-US", "value": "No matching extensions"}
+  ],
+  "installing": [
+    {"lang": "zh-CN", "value": "正在安装，稍候…"},
+    {"lang": "en-US", "value": "Installing…"}
+  ],
+  "remove": [
+    {"lang": "zh-CN", "value": "卸载"},
+    {"lang": "en-US", "value": "Uninstall"}
+  ]
+}

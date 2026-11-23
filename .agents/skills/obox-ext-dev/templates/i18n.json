@@ -1,0 +1,8 @@
+[
+  {"id": "title", "lang": "zh-CN", "value": "__TITLE__"},
+  {"id": "title", "lang": "en-US", "value": "__TITLE__"},
+  {"id": "hint", "lang": "zh-CN", "value": "这是由 obox 脚手架生成的扩展"},
+  {"id": "hint", "lang": "en-US", "value": "Scaffolded by obox"},
+  {"id": "action", "lang": "zh-CN", "value": "点我"},
+  {"id": "action", "lang": "en-US", "value": "Click me"}
+]

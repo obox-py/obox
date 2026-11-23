@@ -1,0 +1,7 @@
+{
+  "name": "dark",
+  "version": "1.0.0",
+  "mode": "dark",
+  "entry": "create_ui_provider",
+  "contract": 1
+}

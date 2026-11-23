@@ -1,0 +1,20 @@
+{
+  "name": "settings",
+  "version": "1.0.0",
+  "publisher": "obox",
+  "description": "设置：主题、语言、扩展配置与关于",
+  "main": "extension.py",
+  "icon": "main.svg",
+  "activationEvents": [
+    "onStartup"
+  ],
+  "contributes": {
+    "views": [
+      {
+        "id": "settings.main",
+        "name": "设置",
+        "container": "sidebar"
+      }
+    ]
+  }
+}

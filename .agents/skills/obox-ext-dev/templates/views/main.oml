@@ -1,0 +1,5 @@
+<Div id="__NAME__-root">
+  <Text id="hello-title" text="{{i18n.title}}" size="18" />
+  <Text id="hello-hint" text="{{i18n.hint}}" />
+  <Button id="hello-btn" type="primary" text="{{i18n.action}}" on_click="true" />
+</Div>

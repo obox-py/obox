@@ -1,0 +1,162 @@
+{
+  "home.hint": [
+    {
+      "lang": "zh-CN",
+      "value": "左侧是扩展注册的图标，点一个查看它的界面；没加载到扩展时这里保持为空。"
+    },
+    {
+      "lang": "en-US",
+      "value": "Icons on the left are registered by extensions; pick one to open it."
+    }
+  ],
+  "apps.timeout": [
+    {
+      "lang": "zh-CN",
+      "value": "扩展未返回界面（3 秒超时）"
+    },
+    {
+      "lang": "en-US",
+      "value": "The extension did not return UI in 3 seconds."
+    }
+  ],
+  "apps.noui": [
+    {
+      "lang": "zh-CN",
+      "value": "扩展没有返回内容"
+    },
+    {
+      "lang": "en-US",
+      "value": "The extension returned no UI."
+    }
+  ],
+  "settings.group.appearance": [
+    {
+      "lang": "zh-CN",
+      "value": "外观"
+    },
+    {
+      "lang": "en-US",
+      "value": "Appearance"
+    }
+  ],
+  "settings.group.language": [
+    {
+      "lang": "zh-CN",
+      "value": "语言"
+    },
+    {
+      "lang": "en-US",
+      "value": "Language"
+    }
+  ],
+  "settings.group.extensions": [
+    {
+      "lang": "zh-CN",
+      "value": "扩展"
+    },
+    {
+      "lang": "en-US",
+      "value": "Extensions"
+    }
+  ],
+  "settings.group.about": [
+    {
+      "lang": "zh-CN",
+      "value": "关于"
+    },
+    {
+      "lang": "en-US",
+      "value": "About"
+    }
+  ],
+  "settings.item.theme": [
+    {
+      "lang": "zh-CN",
+      "value": "主题"
+    },
+    {
+      "lang": "en-US",
+      "value": "Theme"
+    }
+  ],
+  "settings.item.theme.desc": [
+    {
+      "lang": "zh-CN",
+      "value": "切换 light 与 dark 套件，立即生效"
+    },
+    {
+      "lang": "en-US",
+      "value": "Switch between light and dark kits"
+    }
+  ],
+  "settings.item.language": [
+    {
+      "lang": "zh-CN",
+      "value": "界面语言"
+    },
+    {
+      "lang": "en-US",
+      "value": "Display language"
+    }
+  ],
+  "settings.item.language.desc": [
+    {
+      "lang": "zh-CN",
+      "value": "切换后界面按新语言重建"
+    },
+    {
+      "lang": "en-US",
+      "value": "Rebuild the UI in the new language"
+    }
+  ],
+  "settings.item.version": [
+    {
+      "lang": "zh-CN",
+      "value": "版本"
+    },
+    {
+      "lang": "en-US",
+      "value": "Version"
+    }
+  ],
+  "settings.item.version.desc": [
+    {
+      "lang": "zh-CN",
+      "value": "obox 当前版本"
+    },
+    {
+      "lang": "en-US",
+      "value": "Current obox version"
+    }
+  ],
+  "settings.group.behavior": [
+    {
+      "lang": "zh-CN",
+      "value": "行为"
+    },
+    {
+      "lang": "en-US",
+      "value": "Behavior"
+    }
+  ],
+  "settings.item.closeaction": [
+    {
+      "lang": "zh-CN",
+      "value": "关闭窗口时"
+    },
+    {
+      "lang": "en-US",
+      "value": "On window close"
+    }
+  ],
+  "settings.item.closeaction.desc": [
+    {
+      "lang": "zh-CN",
+      "value": "ask 每次询问，tray 最小化到托盘，quit 直接退出"
+    },
+    {
+      "lang": "en-US",
+      "value": "ask, tray, quit"
+    }
+  ]
+}

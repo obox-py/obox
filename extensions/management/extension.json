@@ -1,0 +1,20 @@
+{
+  "name": "extensions",
+  "version": "1.0.0",
+  "publisher": "obox",
+  "description": "扩展管理：安装、禁用与卸载扩展",
+  "main": "extension.py",
+  "icon": "main.svg",
+  "activationEvents": [
+    "onStartup"
+  ],
+  "contributes": {
+    "views": [
+      {
+        "id": "extensions.main",
+        "name": "扩展",
+        "container": "sidebar"
+      }
+    ]
+  }
+}

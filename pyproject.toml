@@ -1,0 +1,42 @@
+[project]
+name = "obox"
+version = "1.0.0"
+description = "可扩展的桌面工作台：HTML 组件 DSL、消息驱动与仿 VSCode 扩展体系"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "matplotlib>=3.11.2",
+    "PySide6>=6.6",
+]
+
+[project.scripts]
+obox = "obox.main:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = [
+    "obox",
+    "obox.api",
+    "obox.core",
+    "obox.core.ipc",
+    "obox.ui",
+    "obox.extensions",
+]
+
+[tool.setuptools.package-data]
+obox = ["assets/*"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-qt>=4.4",
+    "ruff>=0.5",
+    "nuitka>=2.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+qt_api = "pyside6"
