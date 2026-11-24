@@ -21,7 +21,7 @@ BUILD = ROOT / "build"
 DIST = ROOT / "dist"
 STAGE = BUILD / "install"
 TEMPLATE = ROOT / "installer" / "obox.nsi"
-SYSTEM_EXTENSIONS = ("app", "settings")
+SYSTEM_EXTENSIONS = ("app", "settings", "management")
 
 
 def find_makensis() -> Path | None:
@@ -33,6 +33,21 @@ def find_makensis() -> Path | None:
             return candidate
     found = shutil.which("makensis")
     return Path(found) if found else None
+
+
+def compile_extension(source: Path) -> Path | None:
+    """把扩展入口编译成 extension.pyd，返回产物路径。"""
+    sys.path.insert(0, str(ROOT / "scripts"))
+    from pack_extension import compile_module
+
+    output = BUILD / "ext" / source.name
+    if output.exists():
+        shutil.rmtree(output)
+    try:
+        pyd = compile_module(source / "extension.py", output)
+    except SystemExit:
+        return None
+    return pyd if pyd.exists() else None
 
 
 def run_step(name: str, command: list[str]) -> int:
@@ -68,13 +83,27 @@ def main(argv: list[str] | None = None) -> int:
         shutil.rmtree(STAGE)
     STAGE.mkdir(parents=True)
     shutil.copytree(BUILD / "obox.dist", STAGE, dirs_exist_ok=True)
-    shutil.copytree(ROOT / ".theme", STAGE / ".theme", ignore=shutil.ignore_patterns("*.build"))
+    shutil.copytree(
+        ROOT / ".theme",
+        STAGE / "themes",
+        ignore=shutil.ignore_patterns("*.build", "fonts"),
+    )
     for name in SYSTEM_EXTENSIONS:
         source = ROOT / "extensions" / name
         if not source.is_dir():
             print(f"[installer] 缺少系统扩展：{source}", file=sys.stderr)
             return 1
-        shutil.copytree(source, STAGE / "extensions" / name, ignore=shutil.ignore_patterns("__pycache__"))
+        target = STAGE / "extensions" / name
+        shutil.copytree(
+            source,
+            target,
+            ignore=shutil.ignore_patterns("__pycache__", "*.py", "*.pyc"),
+        )
+        compiled = compile_extension(source)
+        if compiled is None:
+            print(f"[installer] 扩展编译失败：{name}", file=sys.stderr)
+            return 1
+        shutil.copy2(compiled, target / "extension.pyd")
 
     makensis = find_makensis()
     if makensis is None:
