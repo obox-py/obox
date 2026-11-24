@@ -83,10 +83,16 @@ class RuntimePaths:
 def resolve(program_dir: Path | None = None, data_dir: Path | None = None) -> RuntimePaths:
     installed = is_installed()
     if program_dir is None:
-        if installed:
+        env_program = os.environ.get("OBOX_PROGRAM_DIR")
+        if env_program:
+            program_dir = Path(env_program)
+        elif installed:
             program_dir = Path(sys.executable).resolve().parent
         else:
             program_dir = Path(__file__).resolve().parent.parent
     if data_dir is None:
-        data_dir = user_data_dir()
-    return RuntimePaths(program_dir=Path(program_dir), data_dir=Path(data_dir))
+        env_data = os.environ.get("OBOX_DATA_DIR")
+        data_dir = Path(env_data) if env_data else user_data_dir()
+    paths = RuntimePaths(program_dir=Path(program_dir), data_dir=Path(data_dir))
+    migrate_legacy(paths.program_dir / ".obox", paths.data_dir)
+    return paths

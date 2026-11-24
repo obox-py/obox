@@ -32,7 +32,15 @@ from ..api.extensions import (
     extensions_changed_message,
     extensions_result_message,
 )
-from .loader import arch_matches, current_arch, package_arch install_one, install_packages, remove_one, scan_all
+from .loader import (
+    arch_matches,
+    current_arch,
+    install_one,
+    install_packages,
+    package_arch,
+    remove_one,
+    scan_all,
+)
 from .manifest import Manifest, load_manifest
 
 LOGGER = logging.getLogger(__name__)

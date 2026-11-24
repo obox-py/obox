@@ -1192,8 +1192,249 @@ class OboxApp:
                 if existing.is_closed_by_user() and not persistent:
                     existing.force_close()
                     self._app_windows.pop(app_id, None)
-                else:
-                    existing.reopen()
-                    return
-        self._app_counter += 1
-        window_id = app_id if single else f"{app_id}#{self._app_counter}"
+        window = AppWindow(str(app.get("title") or app_id), persistent=persistent)
+        application = QApplication.instance()
+        if application is not None and not application.windowIcon().isNull():
+            window.setWindowIcon(application.windowIcon())
+        if self.provider is not None:
+            window.setStyleSheet(self.provider.stylesheet)
+        window.destroyed.connect(lambda *_: self._app_handles.pop(window_id, None))
+        window.destroyed.connect(lambda *_: self._app_windows.pop(window_id, None))
+        self._app_windows[window_id] = window
+        self._app_specs[window_id] = app
+        window.show()
+        window.raise_()
+        self.bus.send(app_open_message(app_id, window_id, str(app["extension_id"])))
+        QTimer.singleShot(3000, lambda: self._app_timeout(window_id))
+
+    def _app_timeout(self, window_id: str) -> None:
+        window = self._app_windows.get(window_id)
+        if window is not None and not window.has_content():
+            window.show_message(self.i18n.translate("{{i18n.apps.timeout}}", "obox"))
+
+    def _on_app_ui(self, message: Any) -> None:
+        payload = message.payload or {}
+        window_id = str(payload.get("window_id") or "")
+        window = self._app_windows.get(window_id)
+        if window is None:
+            return
+        owner = message.src
+        source = str(payload.get("oml") or "")
+        if source:
+            directory = self._extension_dirs.get(owner) or Path("")
+            try:
+                source = load_oml(directory, source)
+            except OmlError as exc:
+                window.show_message(str(exc))
+                return
+        else:
+            source = str(payload.get("html") or "")
+        if not source:
+            window.show_message(self.i18n.translate("{{i18n.apps.noui}}", "obox"))
+            return
+        source = self.i18n.translate(source, owner)
+        handle_out: dict[str, Any] = {}
+        try:
+            root, _ids = self.assemble_view(owner, source, handle_out=handle_out)
+        except OboxError as exc:
+            window.show_message(str(exc))
+            return
+        window.set_content(root)
+        handle = handle_out.get("handle")
+        if handle is not None:
+            self._app_handles[window_id] = (owner, handle)
+
+    def _owned_component(self, owner: str, component_id: str):
+        try:
+            return self.registry.lookup(owner, component_id)
+        except ComponentNotFound:
+            actual_owner = self.registry.owner_of(component_id)
+            if actual_owner is not None and actual_owner != owner:
+                raise ForbiddenOwner(f"组件 {component_id} 属于 {actual_owner}，不允许 {owner} 修改")
+            raise
+
+    def _reply_error(self, message: Any, exc: BaseException) -> None:
+        if message.correlation_id:
+            self.bus.reply(message, error_payload(exc))
+
+    def attach_instance(self, instance: SingleInstance) -> None:
+        self._single = instance
+        instance.show_requested.connect(self._restore_window)
+
+    def _setup_tray(self) -> None:
+        if not TrayIcon.available():
+            return
+        self._tray = TrayIcon(self.window.windowIcon(), self.window)
+        self._tray.show_requested.connect(self._restore_window)
+        self._tray.settings_requested.connect(self._open_settings)
+        self._tray.quit_requested.connect(self._quit)
+        self._tray.reload_requested.connect(self.reload_extensions)
+        self._tray.open_extensions_requested.connect(self._open_extensions_dir)
+        self._tray.theme_requested.connect(self._switch_theme_from_tray)
+        self._tray.language_requested.connect(self._switch_language_from_tray)
+        self._refresh_tray()
+        self._apply_tray_styles()
+        self._tray.show()
+
+    def _refresh_tray(self) -> None:
+        tray = self._tray
+        if tray is None:
+            return
+        labels_by_mode = {"light": "浅色", "dark": "深色"}
+        themes = [
+            (kit.name, labels_by_mode.get(kit.mode, kit.name))
+            for kit in scan_themes([self.themes_root, self.user_themes_root])
+        ]
+        tray.set_theme_options(themes, self.theme_name)
+        tray.set_language_options(self.language_options(), self.i18n.language)
+
+    def _apply_tray_styles(self) -> None:
+        if self._tray is not None and self.provider is not None:
+            self._tray.apply_stylesheet(str(getattr(self.provider, "stylesheet", "")))
+
+    def _switch_theme_from_tray(self, name: str) -> None:
+        if self.switch_theme(name):
+            self._settings["obox.theme"] = name
+            self._save_settings()
+            self._refresh_tray()
+
+    def _switch_language_from_tray(self, code: str) -> None:
+        if self.switch_language(code):
+            self._settings["obox.language"] = code
+            self._save_settings()
+            self._refresh_tray()
+
+    def _open_extensions_dir(self) -> None:
+        from PySide6.QtCore import QUrl
+        from PySide6.QtGui import QDesktopServices
+
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.extensions_root)))
+
+    def reload_extensions(self) -> None:
+        if self._reloading:
+            return
+        self._reloading = True
+        if self._tray is not None:
+            self._tray.set_enabled(False)
+        self._restore_target = self.window.current_view_id()
+        for owner in {spec["extension_id"] for spec in self._view_specs.values()}:
+            self.registry.unregister_owner(owner)
+        self.window.clear_views()
+        self._view_specs.clear()
+        self._view_handles.clear()
+        self.supervisor.restart()
+
+    def _finish_reload(self) -> None:
+        if not self._reloading:
+            return
+        self._reloading = False
+        target = self._restore_target
+        self._restore_target = ""
+        if target:
+            self._restore_view(target)
+        if self._tray is not None:
+            self._tray.set_enabled(True)
+        self.window.notify_warning("扩展已刷新", "宿主已重启，视图已恢复")
+
+    def _restore_window(self) -> None:
+        self.window.show()
+        self.window.raise_()
+        self.window.activateWindow()
+
+    def _open_settings(self) -> None:
+        self._restore_window()
+        self.window.show_view("settings.main")
+
+    def _on_close_requested(self) -> None:
+        if self.close_action == "ask":
+            dialog = CloseDialog(self.window)
+            accepted = bool(dialog.exec())
+            final, persisted = decide_close("ask", dialog.choice, dialog.remember)
+            if persisted:
+                self._set_close_action(persisted)
+            if not accepted or final == "cancel":
+                return
+        else:
+            final, _ = decide_close(self.close_action)
+        if final == "quit":
+            self._quit()
+        else:
+            self._to_tray()
+
+    def _set_close_action(self, action: str) -> None:
+        if action not in CLOSE_ACTIONS:
+            return
+        self.close_action = action
+        self._settings["obox.close_action"] = action
+        self._save_settings()
+        self._push_settings()
+
+    def _to_tray(self) -> None:
+        if self._tray is None:
+            self._quit()
+            return
+        self.window.hide()
+        self._tray.show()
+
+    def _quit(self) -> None:
+        if self._tray is not None:
+            self._tray.hide()
+        self.window.allow_close()
+        self.window.close()
+        self.shutdown()
+        instance = QApplication.instance()
+        if instance is not None:
+            instance.quit()
+
+    def shutdown(self) -> None:
+        if getattr(self, "_stopped", False):
+            return
+        self._stopped = True
+        if self._tray is not None:
+            self._tray.hide()
+            self._tray.deleteLater()
+            self._tray = None
+        if self._watch_timer is not None:
+            self._watch_timer.stop()
+            self._watch_timer = None
+        try:
+            self.supervisor.stop()
+        except Exception as exc:
+            print(f"[obox] 停止宿主失败：{exc}", file=sys.stderr)
+        self.window.allow_close()
+
+
+def run(
+    extensions_dir: str = "",
+    exit_after: float = 0.0,
+    theme: str = "",
+    language: str = "",
+) -> int:
+    apply_app_user_model_id()
+    QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
+        Qt.HighDpiScaleFactorRoundingPolicy.PassThrough
+    )
+    app = QApplication.instance() or QApplication(sys.argv[:1])
+    icon_path = Path(__file__).resolve().parent / "assets" / "obox.svg"
+    if icon_path.exists():
+        app.setWindowIcon(QIcon(str(icon_path)))
+    instance = SingleInstance()
+    if instance.try_notify():
+        return 0
+    instance.listen()
+    paths = resolve_paths()
+    project_root = paths.program_dir
+    try:
+        obox_app = OboxApp(project_root, extensions_dir, theme, language, data_dir=paths.data_dir)
+        obox_app.attach_instance(instance)
+        obox_app.start()
+    except OboxError as exc:
+        print(f"[obox] 启动失败：{exc}", file=sys.stderr)
+        return 2
+    if exit_after > 0:
+        QTimer.singleShot(int(exit_after * 1000), app.quit)
+    try:
+        return app.exec()
+    finally:
+        obox_app.shutdown()
+        instance.close()
