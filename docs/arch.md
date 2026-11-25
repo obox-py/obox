@@ -447,6 +447,12 @@ graph TB
 - **控件边界**：扩展只能操作自己命名空间下的组件，越权直接拒绝。
 - **样式边界**：扩展 QSS 经过选择器白名单过滤后才会被应用。
 
+### 7.6 资源目录与双架构产物
+
+- 运行期资源：安装目录 themes/ 与 extensions/ 提供系统主题与系统扩展；数据目录 themes/ 与 extensions/ 提供用户覆盖与安装的扩展；同名时用户目录优先，源码态开发沿用 .theme 与 extensions/。
+- 构建产物：主题编译为 themes/{name}/{name}.pyd 目录，系统扩展（app、settings、management）编译为 extensions/{id}/extension.pyd 目录，随 NSIS 安装包分发；用户扩展独立仓产 oix，按 x86_64/arm64 各一份。
+- 发布：PR 跑测试与打包冒烟；v 开头 tag 触发矩阵构建并上传 Release。
+
 ## 8. 非功能性需求设计
 
 ### 8.1 稳定性与容错

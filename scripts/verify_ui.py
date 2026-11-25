@@ -424,6 +424,30 @@ def main(argv: list[str] | None = None) -> int:
             if web_window is not None:
                 driver.screenshot(web_window, f"{obox.theme_name}_25_webapp_modal")
 
+        if "chartdemo.main" in obox.window.view_ids():
+            obox.window.show_view("chartdemo.main")
+            from obox.api.message import Message as _Msg
+
+            obox.bus.send(
+                _Msg(
+                    src="obox",
+                    dst="chartdemo.obox",
+                    msg_id="COMPONENT_EVENT_MSG",
+                    payload={"id": "demo-line", "event": "click", "value": ""},
+                )
+            )
+
+            def _chart_ready() -> bool:
+                try:
+                    chart = obox.registry.lookup("chartdemo.obox", "demo-chart")
+                    return bool(chart._figure and chart._figure.axes and len(chart._figure.axes[0].lines) >= 2)
+                except Exception:
+                    return False
+
+            chart_ok = driver.wait_until(_chart_ready, timeout=8)
+            check("matplotlib 示例渲染折线", chart_ok, "")
+            driver.screenshot(obox.window, f"{obox.theme_name}_26_matplotlib")
+
         driver.screenshot(obox.window, f"{obox.theme_name}_04_final")
     finally:
         obox.supervisor.stop()

@@ -1192,6 +1192,8 @@ class OboxApp:
                 if existing.is_closed_by_user() and not persistent:
                     existing.force_close()
                     self._app_windows.pop(app_id, None)
+        self._app_counter += 1
+        window_id = app_id if single else f"{app_id}#{self._app_counter}"
         window = AppWindow(str(app.get("title") or app_id), persistent=persistent)
         application = QApplication.instance()
         if application is not None and not application.windowIcon().isNull():

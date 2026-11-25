@@ -22,7 +22,7 @@ status: done
 | `obox/ui/kit.py` | 新增多目录扫描与去重（用户目录优先） | 界面套件清单与加载 |
 | `obox/app.py` | 用合并后的主题列表；托盘与设置页同源 | 运行时资源目录 |
 | `obox/extensions/host.py` | 安装 oix 时按进程架构选包（x64/arm64 后缀） | 扩展目录与清单 |
-| `scripts/build_theme.py` | 产物目录可指定，支持 themes/<name> 布局 | 构建与 pyd 产物 |
+| `scripts/build_theme.py` | 产物目录可指定，支持 themes 下按套件名建目录 | 构建与 pyd 产物 |
 | `scripts/build_exe.py` | 把 themes/ 与 extensions/ 编译目录放进 standalone | 构建与 pyd 产物 |
 | `scripts/build_installer.py` | 安装包带 themes/ 与 extensions/，产物名带架构 | 构建与 pyd 产物 |
 | `.github/workflows/build.yml`（主仓） | PR 测试 + tag 构建 x64/arm64 安装包并上传 Release | 仓库与发布流程、构建与 pyd 产物 |

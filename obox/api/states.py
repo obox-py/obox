@@ -9,7 +9,23 @@ ENABLED = "enabled"
 FOCUSED = "focused"
 HOVERED = "hovered"
 READONLY = "readonly"
+DATA = "data"
+CODE = "code"
+TITLE = "title"
 
 ALL_STATES = frozenset(
-    {VALUE, CHECKED, SELECTED, TEXT, VISIBLE, ENABLED, FOCUSED, HOVERED, READONLY}
+    {
+        VALUE,
+        CHECKED,
+        SELECTED,
+        TEXT,
+        VISIBLE,
+        ENABLED,
+        FOCUSED,
+        HOVERED,
+        READONLY,
+        DATA,
+        CODE,
+        TITLE,
+    }
 )

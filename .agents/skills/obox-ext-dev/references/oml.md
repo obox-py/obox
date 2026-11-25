@@ -51,7 +51,8 @@ chart 由 obox 提供（不在主题里），用 matplotlib 的 QtAgg 画布渲�
 ```
 
 - data 是 JSON：type 取 line、bar、scatter；series 每项 {name, points:[{x,y}]}；x 可选标签数组
-- 状态：data、title；数据变化时重绘
+- 组件自带 matplotlib 导航工具栏（Home/前进/后退/平移/缩放/子图/保存），状态：data、title、code；data 走 JSON 结构，code 是 matplotlib Python 代码（可用 fig/ax/plt/np），二者有 code 时优先
+- 示例见 extensions/chartdemo：扩展发 COMPONENT_MODIFY_MSG(state_type=code) 即可换成图表代码
 - 数据从扩展进程经消息下发，宿主进程不需要 matplotlib
 
 ## collapse（折叠面板）

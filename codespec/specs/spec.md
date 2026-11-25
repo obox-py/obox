@@ -177,7 +177,7 @@ obox SHALL 用网格卡片列出所有声明了 app 的已激活扩展：卡片�
 
 ### Requirement: 扩展目录与清单
 
-obox SHALL 扫描三个扩展根：安装目录的 extensions（系统扩展）、数据目录的 extensions（用户安装）、源码 extensions（开发）；同名扩展按「用户安装 > 系统 > 源码」优先并记录覆盖日志；目录需含合法 extension.json，入口为 extension.py 或 extension.pyd，.oix 先解压再扫描。
+obox SHALL 扫描三个扩展根：安装目录的 extensions（系统扩展）、数据目录的 extensions（用户安装）、源码 extensions（开发）；同名扩展按「用户安装 > 系统 > 源码」优先并记录覆盖日志；目录需含合法 extension.json，入口为 extension.py 或 extension.pyd，.oix 先解压再扫描。安装 oix 时 SHALL 按文件名中的 -win-x64 / -win-arm64 与当前进程架构比对，不匹配直接拒绝。
 
 #### Scenario: 合法源码扩展被识别
 
@@ -369,7 +369,7 @@ obox 主界面由上、中、下三段组成：顶栏左侧显示 obox 图标与
 
 ### Requirement: 界面套件清单与加载
 
-obox SHALL 扫描 .theme 下每个子目录，读取其中的 theme.json（name、version、mode、entry）与 pyd，形成可用套件清单；启动时按清单与 .obox/config.json 的 theme 字段选择一套，配置缺失时取 light，命令行参数可以临时覆盖；缺清单、缺 pyd 或版本不兼容时报错退出。
+obox SHALL 从安装目录 themes/（源码态回退 .theme）与数据目录 themes/ 两处扫描主题，读取每个子目录的 theme.json（name、version、mode、entry）与 pyd，同名以数据目录优先并去重，形成可用套件清单；启动时按清单与 .obox/config.json 的 theme 字段选择一套，配置缺失时取 light，命令行参数可以临时覆盖；缺清单、缺 pyd 或版本不兼容时报错退出。
 
 #### Scenario: 启动时枚举可用套件
 
@@ -443,7 +443,7 @@ obox SHALL 支持运行中切换套件：销毁现有视图并按新套件重建
 
 ### Requirement: 构建与 pyd 产物
 
-工程 SHALL 提供一条构建命令，把 theme/{name} 编译为 .theme/{name}/{name}.pyd 并复制 theme.json；构建失败以非零退出码结束且不留半成品。
+工程 SHALL 提供 x86_64 与 ARM64 两种目标的构建：把 theme/{name} 编译为 themes/{name}/{name}.pyd 并复制 theme.json、styles.qss 与字体，把系统扩展（app、settings、management）编译为 extensions/{id}/extension.pyd 目录；安装包 SHALL 包含这两类目录；用户扩展的 oix SHALL 按架构分别产出。构建失败以非零退出码结束且不留半成品。
 
 #### Scenario: 构建产物齐全
 
@@ -695,7 +695,7 @@ obox SHALL 扫描 .obox/extensions 与 extensions/ 两个根，按清单识别�
 
 ### Requirement: 扩展开发技能
 
-工程 SHALL 提供 .agents/skills/obox-ext-dev：SKILL.md 说明触发与步骤；references 覆盖清单、context API、oml、i18n、打包；templates 提供可拷贝的清单/入口/oml/i18n/图标；scripts 提供扩展脚手架与清单校验。
+工程 SHALL 提供 .agents/skills/obox-ext-dev：SKILL.md 说明触发与步骤；references 覆盖清单（含 contributes.app 与 configuration）、context API（含配置下发与 App 窗口数据通道）、oml、i18n、打包；templates 提供可拷贝的清单/入口/oml/i18n/图标；scripts 提供扩展脚手架与清单校验。
 
 #### Scenario: 脚手架生成可运行扩展
 - **WHEN** 运行 scaffold_extension.py 并给出名称与作者
@@ -783,11 +783,51 @@ obox SHALL 在系统托盘显示图标：双击恢复主窗口，右键菜单提
 
 ### Requirement: 扩展配置贡献
 
-extension.json SHALL 支持 contributes.configuration：属性表每项声明 type（bool、string、enum）、title、default 与可选 enum；obox 校验后汇总成设置项下发；非法类型、缺 title、enum 默认值不在枚举内都会被拒绝。
+extension.json SHALL 支持 contributes.configuration：属性名只能是小写字母数字，属性表每项声明 type（bool、string、enum）、title、default 与可选 enum；obox 校验后汇总成设置项下发；非法类型、缺 title、enum 默认值不在枚举内都会被拒绝。obox SHALL 在扩展激活后与设置写入后，把该扩展的配置当前值以 EXTENSION_CONFIG_MSG（values + defaults，键为属性名）发给它。
 
 #### Scenario: 贡献出现在设置页
 - **WHEN** 扩展声明两个配置项
 - **THEN** 设置页「扩展」分类出现对应控件，默认值来自 default
+
+### Requirement: 远程桌面扩展
+
+工程 SHALL 提供用户扩展 rdp.chenzhi：contributes.app 提供「远程桌面」卡片，界面含连接列表、搜索与新建/编辑模态框（折叠分组），连接字段覆盖账号、显示、连接、音频、本地资源与体验。打开连接时生成 .rdp，记住密码时写入 DPAPI 密文到 password 51:b 字段，并以脱离 obox 进程树的方式启动 mstsc；非 Windows 平台提示不支持。
+
+#### Scenario: 新建并打开连接
+- **WHEN** 填入名称、主机与账号后保存并点「连接」
+- **THEN** 生成 .rdp 并启动独立 mstsc 进程，列表出现该连接
+
+#### Scenario: 删除需确认
+- **WHEN** 点某条连接的「删除」
+- **THEN** 先弹出确认框，确认后才删除记录与密文
+
+### Requirement: 网页应用扩展
+
+工程 SHALL 提供用户扩展 webapp.chenzhi：contributes.app 提供「网页应用」卡片，站点字段含名称、URL、说明、忽略证书、额外 origin、窗口尺寸/位置、启动最大化、语言、缩放与禁用 GPU。打开时用 Chrome 的 app 模式与独立 profile 目录启动并脱离 obox；找不到 Chrome 或超出配置的数据上限时在页面提示。
+
+#### Scenario: 打开站点
+- **WHEN** 站点 URL 有效且本机有 Chrome
+- **THEN** Chrome 以 --app 模式启动，profile 位于配置根下的条目目录
+
+### Requirement: 运行时资源目录
+
+宿主 SHALL 从安装目录 themes/ 与 extensions/、数据目录 themes/ 与 extensions/ 加载资源；同名以数据目录优先；安装目录缺失时仍可用用户目录启动。
+
+#### Scenario: 系统主题预装
+- **WHEN** 安装包安装后首次启动
+- **THEN** 主题列表包含安装目录 themes 下的 light 与 dark
+
+#### Scenario: 用户扩展与系统扩展并存
+- **WHEN** 数据目录安装了 rdp，安装目录有 app/settings/management
+- **THEN** 启动后四类扩展都可用
+
+### Requirement: 仓库与发布流程
+
+组织 SHALL 维护 obox（主程序、系统扩展、系统主题）、rdp、webapp 三个仓库；改动经分支与 Pull Request 合并，PR 上运行测试与打包冒烟；打 v 开头 tag 时构建 Release 产物，包含 x86_64 与 ARM64 安装包，以及用户扩展对应架构的 oix。
+
+#### Scenario: tag 发布
+- **WHEN** 打 v1.0.0
+- **THEN** Release 附带 obox x86_64/arm64 安装包与 rdp、webapp 两种架构的 oix
 
 ### Requirement: 设置读写
 

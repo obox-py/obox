@@ -162,6 +162,11 @@ obox/
 
 每个技能目录含 SKILL.md 与按需的 references、templates、scripts；脚本用 uv 在仓库根运行。
 
+## 远端仓库与 CI
+
+- 组织 obox-py 下三个仓库：obox（主程序、系统扩展、系统主题）、rdp、webapp（用户扩展各一仓）。
+- PR 上运行 pytest 与打包冒烟；打 v* tag 触发 Release，产物为 obox 的 x86_64 / arm64 安装包，以及 rdp、webapp 对应架构的 oix。
+
 ## 安装包
 
 ```bash

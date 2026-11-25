@@ -62,3 +62,23 @@ def test_x_labels_applied(qapp) -> None:
     )
     labels = [tick.get_text() for tick in chart._figure.axes[0].get_xticklabels()]
     assert labels == ["一月", "二月"]
+
+def test_render_matplotlib_code(qapp) -> None:
+    chart = _chart({"type": "line", "series": []})
+    chart.set_code("ax.plot([1, 2, 3], [4, 5, 6], color='#2f6bee')\nax.set_title('代码绘制')")
+    axes = chart._figure.axes[0]
+    assert len(axes.lines) == 1
+    assert axes.get_title() == "代码绘制"
+
+
+def test_bad_code_shows_error(qapp) -> None:
+    chart = _chart({"type": "line", "series": []})
+    chart.set_code("raise ValueError('坏代码')")
+    texts = [item.get_text() for item in chart._figure.axes[0].texts]
+    assert any("图表代码错误" in text for text in texts)
+
+def test_has_navigation_toolbar(qapp) -> None:
+    from matplotlib.backends.backend_qtagg import NavigationToolbar2QT
+
+    chart = _chart({"type": "line", "series": [{"name": "a", "points": [{"x": 0, "y": 1}]}]})
+    assert chart.widget.findChild(NavigationToolbar2QT) is not None
