@@ -64,7 +64,7 @@ jobs:
       - name: Collect installer
         shell: pwsh
         env:
-          REF_NAME: ${{ github.ref_name }}
+          REF_NAME: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
           ARCH: ${{ matrix.arch }}
           QT_BINDING: ${{ matrix.qt }}
         run: |
