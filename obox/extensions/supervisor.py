@@ -139,13 +139,11 @@ class Supervisor(QObject):
         ]
         for directory in self._dev_dirs:
             host_args.extend(["--dev-dir", str(directory)])
-        if self._debug and not _IS_FROZEN:
-            prefix = ["-Xfrozen_modules=off", "-m", "debugpy", "--listen", "127.0.0.1:" + str(self._debug_port)]
-            if self._debug_wait:
-                prefix.append("--wait-for-client")
-            process.setArguments([*prefix, *host_args])
-        else:
-            process.setArguments(host_args)
+        if self._debug:
+            host_args.extend(["--debug", "--debug-port", str(self._debug_port)])
+            if not self._debug_wait:
+                host_args.append("--no-debug-wait")
+        process.setArguments(host_args)
         _debug(f"spawn frozen={_IS_FROZEN} cmd={program} args={process.arguments()}")
         process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         process.errorOccurred.connect(lambda error: _debug(f"process error {error}"))

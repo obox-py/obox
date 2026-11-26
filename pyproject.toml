@@ -11,7 +11,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-pyqt5 = ["PyQt5>=5.15.11"]
+pyqt5 = ["PyQt5==5.15.11", "PyQt5-Qt5==5.15.2"]
 
 [project.scripts]
 obox = "obox.main:main"
@@ -45,3 +45,5 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 qt_api = "pyside6"
+[tool.uv]
+constraint-dependencies = ["cryptography<46.0.4"]

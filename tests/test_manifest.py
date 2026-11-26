@@ -21,7 +21,7 @@ pytestmark_demo = pytest.mark.skipif(
 @pytestmark_demo
 def test_demo_manifest_valid() -> None:
     manifest = load_manifest(DEMO)
-    assert manifest.extension_id == "demo.obox"
+    assert manifest.extension_id == "demo.chenzhi"
     assert manifest.icon_path.exists()
     assert "views" in manifest.contributes
 

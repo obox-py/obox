@@ -1,0 +1,27 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "obox: 等待调试端口 5678",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$ok=$false; for($i=0;$i -lt 150;$i++){ try { $c=New-Object Net.Sockets.TcpClient; $c.Connect('127.0.0.1',5678); $c.Close(); $ok=$true; break } catch { Start-Sleep -Milliseconds 200 } }; if($ok){ exit 0 } else { Write-Output '等待 5678 超时'; exit 1 }"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "obox: 启动已安装 obox（当前扩展）",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-Command",
+        "$exe=Join-Path $env:LOCALAPPDATA 'Programs\\obox\\obox.exe'; if(-not (Test-Path $exe)){ Write-Output '未找到已安装 obox：'+$exe; exit 1 }; Start-Process -FilePath $exe -ArgumentList @('--dev-extension','${fileDirname}','--debug','--debug-port','5678','--no-dev-reload'); for($i=0;$i -lt 150;$i++){ try { $c=New-Object Net.Sockets.TcpClient; $c.Connect('127.0.0.1',5678); $c.Close(); exit 0 } catch { Start-Sleep -Milliseconds 200 } }; Write-Output '已安装 obox 未监听 5678（需要含 debugpy 的新版本）'; exit 1"
+      ],
+      "problemMatcher": []
+    }
+  ]
+}

@@ -7,6 +7,13 @@
 - obox 从源码运行（`uv sync` 后），debugpy 在 dev 依赖里；发布版不带调试器
 - VS Code 安装 Python Debugger 扩展
 
+## 两个启动配置
+
+1. **调试当前扩展（已安装 obox）**：调用 `%LOCALAPPDATA%\Programs\obox\obox.exe`，带 `--dev-extension ${fileDirname} --debug` 启动，再 attach 5678；需要安装版包含 debugpy（1.0.0 起）
+2. **调试 obox 和当前扩展**：用源码启动 obox（VS Code 调试主进程），同时 attach 扩展宿主，两个会话一起调试
+
+两个配置都要求当前编辑器打开目标扩展的 extension.py。
+
 ## 选择要调试的扩展
 
 - 最省事：在 VS Code 打开目标扩展的 `extension.py`，选「obox: 调试当前扩展（启动 obox + attach）」——它用 `${fileDirname}` 作为开发目录，并自动完成「启动 obox + attach 宿主」
@@ -71,6 +78,9 @@ bus.send(Message(src="obox", dst="obox", msg_id=DEV_EXTENSION_ADD_MSG, payload={
 ```
 
 ## 常见问题
+
+- `ECONNREFUSED 127.0.0.1:5678`：宿主还没开始监听就 attach 了。用「obox: 调试当前扩展（启动 obox + attach）」，它的 attach 会先等 5678 端口；若已有 obox 在运行，先退出它，否则新实例会被单实例逻辑挡掉
+
 
 - 端口占用：换 `--debug-port`，同步改 launch.json
 - attach 后没停：确认断点在开发目录的源码上，`justMyCode: false`，pathMappings 指向同一路径

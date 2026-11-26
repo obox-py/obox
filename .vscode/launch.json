@@ -1,22 +1,15 @@
 {
   "version": "0.2.0",
-  "inputs": [
-    {
-      "id": "devDir",
-      "type": "promptString",
-      "description": "选择要调试的扩展开发目录（含 extension.json）",
-      "default": "${workspaceFolder}/extensions/pickerdemo"
-    }
-  ],
   "configurations": [
     {
-      "name": "obox: 仅 attach 扩展宿主（obox 已运行）",
+      "name": "调试当前扩展（已安装 obox）",
       "type": "debugpy",
       "request": "attach",
       "connect": {
         "host": "127.0.0.1",
         "port": 5678
       },
+      "preLaunchTask": "obox: 启动已安装 obox（当前扩展）",
       "justMyCode": false,
       "pathMappings": [
         {
@@ -26,7 +19,7 @@
       ]
     },
     {
-      "name": "obox: 启动当前扩展并等待 attach",
+      "name": "obox: 源码启动（内部）",
       "type": "debugpy",
       "request": "launch",
       "module": "obox.main",
@@ -43,43 +36,38 @@
         "OBOX_QT": "pyside6",
         "PYTHONUTF8": "1"
       },
-      "justMyCode": true
+      "justMyCode": true,
+      "presentation": {
+        "hidden": true
+      }
     },
     {
-      "name": "obox: 启动选择目录并等待 attach",
+      "name": "obox: 宿主 attach（内部）",
       "type": "debugpy",
-      "request": "launch",
-      "module": "obox.main",
-      "args": [
-        "--dev-extension",
-        "${input:devDir}",
-        "--debug",
-        "--debug-port",
-        "5678",
-        "--no-dev-reload"
-      ],
-      "console": "integratedTerminal",
-      "env": {
-        "OBOX_QT": "pyside6",
-        "PYTHONUTF8": "1"
+      "request": "attach",
+      "connect": {
+        "host": "127.0.0.1",
+        "port": 5678
       },
-      "justMyCode": true
+      "preLaunchTask": "obox: 等待调试端口 5678",
+      "justMyCode": false,
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "${workspaceFolder}"
+        }
+      ],
+      "presentation": {
+        "hidden": true
+      }
     }
   ],
   "compounds": [
     {
-      "name": "obox: 调试当前扩展（启动 obox + attach）",
+      "name": "调试 obox 和当前扩展",
       "configurations": [
-        "obox: 启动当前扩展并等待 attach",
-        "obox: 仅 attach 扩展宿主（obox 已运行）"
-      ],
-      "stopAll": true
-    },
-    {
-      "name": "obox: 调试选择目录的扩展（启动 obox + attach）",
-      "configurations": [
-        "obox: 启动选择目录并等待 attach",
-        "obox: 仅 attach 扩展宿主（obox 已运行）"
+        "obox: 源码启动（内部）",
+        "obox: 宿主 attach（内部）"
       ],
       "stopAll": true
     }
