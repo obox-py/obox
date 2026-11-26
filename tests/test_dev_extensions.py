@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 import time
 from pathlib import Path
 
@@ -123,17 +122,18 @@ def test_supervisor_debug_arguments(monkeypatch, tmp_path: Path) -> None:
     )
     supervisor._spawn()
     args = captured["args"]
-    assert args[:1] == ["-Xfrozen_modules=off"]
-    assert args[1:6] == ["-m", "debugpy", "--listen", "127.0.0.1:5678", "--wait-for-client"]
+    assert "--debug" in args
+    assert args[args.index("--debug-port") + 1] == "5678"
     assert "--dev-dir" in args and str(tmp_path / "hello") in args
+    assert "debugpy" not in args  # 由宿主自己 listen，不再包一层 debugpy 命令
 
 
 def test_launch_json_has_attach_config() -> None:
     data = json.loads((ROOT / ".vscode" / "launch.json").read_text(encoding="utf-8"))
-    names = [config["name"] for config in data["configurations"]]
-    assert any("attach" in name for name in names)
-    attach = next(config for config in data["configurations"] if config["request"] == "attach")
-    assert attach["connect"]["port"] == 5678
+    visible = [config for config in data["configurations"] if not config.get("presentation", {}).get("hidden")]
+    assert len(visible) == 1 and visible[0]["request"] == "attach"
+    assert visible[0]["connect"]["port"] == 5678
+    assert len(data["compounds"]) == 1 and data["compounds"][0]["name"] == "调试 obox 和当前扩展"
 
 def test_dev_extension_accepts_extension_py_path(qapp, tmp_path: Path) -> None:
     dev = _prepare(tmp_path)

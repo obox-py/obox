@@ -73,6 +73,7 @@ def main(argv: list[str] | None = None) -> int:
         f"--nofollow-import-to={'PySide6' if args.qt == 'pyqt5' else 'PyQt5'}",
         "--include-package=obox",
         "--include-package-data=obox",
+        "--include-package=debugpy",
         "--windows-console-mode=disable",
         "--assume-yes-for-downloads",
         f"--output-dir={BUILD}",

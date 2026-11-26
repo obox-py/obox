@@ -455,7 +455,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--install-dir", required=True)
     parser.add_argument("--storage-dir", required=True)
     parser.add_argument("--dev-dir", action="append", default=[], help="开发中的扩展目录，可重复")
+    parser.add_argument("--debug", action="store_true", help="debugpy 监听，等待 VS Code attach")
+    parser.add_argument("--debug-port", type=int, default=5678)
+    parser.add_argument("--no-debug-wait", action="store_true")
     args = parser.parse_args(argv)
+    if args.debug:
+        import debugpy
+
+        debugpy.listen(("127.0.0.1", args.debug_port))
+        if not args.no_debug_wait:
+            debugpy.wait_for_client()
 
     app = QCoreApplication(sys.argv[:1])
     client = IpcClient()

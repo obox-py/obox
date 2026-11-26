@@ -52,20 +52,22 @@ def test_messages_round_trip() -> None:
     assert decode_message(changed.to_dict()).payload["anchor"] == "section-about"
 
 
-def test_scroll_to_anchor_applies_offset(qapp) -> None:
+def test_scroll_to_anchor_applies_offset(qapp, qtbot) -> None:
     area, content, sections = _scene()
     controller = AnchorController(area, content, offset=64, duration=1)
+    target = sections["b"].y() - 64
     assert controller.scroll_to("b")
-    QTest.qWait(80)
-    assert area.verticalScrollBar().value() == sections["b"].y() - 64
+    qtbot.waitUntil(lambda: area.verticalScrollBar().value() == target, timeout=2000)
 
 
-def test_scroll_clamps_to_bounds(qapp) -> None:
+def test_scroll_clamps_to_bounds(qapp, qtbot) -> None:
     area, content, _sections = _scene()
     controller = AnchorController(area, content, offset=0, duration=1)
     assert controller.scroll_to("c")
-    QTest.qWait(80)
-    assert area.verticalScrollBar().value() == area.verticalScrollBar().maximum()
+    qtbot.waitUntil(
+        lambda: area.verticalScrollBar().value() == area.verticalScrollBar().maximum(),
+        timeout=2000,
+    )
 
 
 def test_current_anchor_top_middle_bottom(qapp) -> None:

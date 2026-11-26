@@ -27,10 +27,10 @@ jobs:
       - uses: astral-sh/setup-uv@v5
       - run: uv sync ${{ matrix.qt == 'pyqt5' && '--extra pyqt5' || '' }}
       - run: uv run python scripts/build_theme.py light dark
-      - run: uv run pytest -q
+      - run: uv run pytest -q -o qt_api=${{ matrix.qt }}
 
   package:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     strategy:
       fail-fast: false
       matrix:
@@ -44,8 +44,11 @@ jobs:
           - os: windows-11-arm
             arch: arm64
             qt: pyside6
+          - os: windows-latest
+            arch: arm64
+            qt: pyqt5
+            emulated: true
     runs-on: ${{ matrix.os }}
-    continue-on-error: ${{ matrix.arch == 'arm64' }}
     env:
       OBOX_QT: ${{ matrix.qt }}
     steps:
@@ -61,7 +64,7 @@ jobs:
       - name: Collect installer
         shell: pwsh
         env:
-          REF_NAME: ${{ github.ref_name }}
+          REF_NAME: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
           ARCH: ${{ matrix.arch }}
           QT_BINDING: ${{ matrix.qt }}
         run: |

@@ -28,10 +28,10 @@ def _start(qtbot) -> OboxApp:
 def test_click_reaches_extension_and_updates_state(qtbot) -> None:
     obox = _start(qtbot)
     try:
-        status = obox.registry.lookup("demo.obox", "demo-status")
+        status = obox.registry.lookup("demo.chenzhi", "demo-status")
         getter = status.state_accessors["text"][0]
         assert getattr(status, getter)() == "等待点击"
-        button = obox.registry.lookup("demo.obox", "demo-btn")
+        button = obox.registry.lookup("demo.chenzhi", "demo-btn")
         QTest.mouseClick(button.widget, Qt.MouseButton.LeftButton)
         qtbot.waitUntil(lambda: getattr(status, getter)() == "按钮被点击了", timeout=15000)
     finally:
@@ -48,9 +48,9 @@ def test_host_restart_restores_extension(qtbot) -> None:
         process.waitForFinished(3000)
         qtbot.waitUntil(lambda: "restarting" in states, timeout=15000)
         qtbot.waitUntil(lambda: "ready" in states[states.index("restarting"):], timeout=30000)
-        status = obox.registry.lookup("demo.obox", "demo-status")
+        status = obox.registry.lookup("demo.chenzhi", "demo-status")
         getter = status.state_accessors["text"][0]
-        button = obox.registry.lookup("demo.obox", "demo-btn")
+        button = obox.registry.lookup("demo.chenzhi", "demo-btn")
         QTest.mouseClick(button.widget, Qt.MouseButton.LeftButton)
         qtbot.waitUntil(lambda: getattr(status, getter)() == "按钮被点击了", timeout=15000)
     finally:
