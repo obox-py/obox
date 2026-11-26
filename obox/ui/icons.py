@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor, QIcon, QImage, QPainter, QPixmap
-from PySide6.QtSvg import QSvgRenderer
+from obox.qt import Qt
+from obox.qt import QColor, QIcon, QImage, QPainter, QPixmap
+from obox.qt import QSvgRenderer
 
 
 def tinted_pixmap(path: str | Path, color: str, size: int = 44) -> QPixmap:

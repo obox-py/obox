@@ -4,14 +4,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from extensions.rdp.extension import build_rdp_text, normalize_connection, validate_connection
-from extensions.webapp.extension import (
-    build_chrome_args,
-    dir_size_mb,
-    find_chrome,
-    normalize_site,
-    validate_site,
-)
+import pytest
+
+try:
+    from extensions.rdp.extension import build_rdp_text, normalize_connection, validate_connection
+    from extensions.webapp.extension import (
+        build_chrome_args,
+        dir_size_mb,
+        find_chrome,
+        normalize_site,
+        validate_site,
+    )
+except ImportError:  # 用户扩展不入主仓，独立仓库里才跑这些用例
+    pytest.skip("rdp/webapp 用户扩展不在主仓", allow_module_level=True)
 
 
 def test_rdp_normalize_defaults() -> None:

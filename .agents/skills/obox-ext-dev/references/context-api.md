@@ -85,6 +85,10 @@ def activate(context):
 - App 窗口的数据通道与普通视图一致，view_id 用 `app.<window_id>`
 - 配置值的键是清单里的属性名；未设置的键收到 default
 
+## Qt 绑定
+
+obox 同时兼容 PySide6 与 PyQt5，扩展**不要直接 import 任何一个绑定**：扩展只用 obox.api 的消息即可。确需 Qt 类型（例如在扩展里绘图）时，从 `obox.qt` 取 `QtCore/QtGui/QtWidgets/Qt/Signal/Property`，这样两套绑定下都能运行。
+
 ## 文件与目录选择（picker）
 
 ```python
@@ -124,3 +128,20 @@ payload = request.result()        # {"paths": [...], "cancelled": bool, "error":
 - 远端左侧只显示该服务器的入口（主机、主目录、根目录、常用目录），不出现本地目录
 - 远端支持上传/下载（对话框内按钮），不支持新建文件夹；主机键自动写入 `~/.ssh/known_hosts`
 - 路径栏旁的下拉可快速回到最近访问过的目录
+
+## 开发调试（dev extension）
+
+不安装 .oix，直接把开发目录挂到本机 obox：
+
+```bash
+uv run obox --dev-extension D:\work\hello --debug
+# VS Code 里选「obox: attach 扩展宿主（断点）」，端口 5678
+```
+
+- `--dev-extension` 可重复；目录必须含 extension.json；只挂到扩展宿主，不复制、不写 disabled
+- 开发目录记进配置 dev_extensions；下次启动自动加载
+- `--debug` 用 debugpy 启动宿主（默认 5678，`--debug-port` 可改；`--no-debug-wait` 不等待连接）
+- 保存开发目录里的文件会自动重启宿主；`--no-dev-reload` 关闭
+- 运行中可通过 DEV_EXTENSION_ADD_MSG / DEV_EXTENSION_REMOVE_MSG（payload {path}）加入或移除
+- 仓库的 .vscode/launch.json 提供 attach 与 launch 两种配置；debugpy 是 dev 依赖，不进发布包
+- 开发扩展在列表里 origin=dev；移除只停用，不会删安装目录（本来也没有副本）

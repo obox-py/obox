@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtWidgets import QWidget
+from obox.qt import QWidget
 
 from obox.app import OboxApp
 from obox.ui.main_window import MainWindow

@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from typing import Any, Callable
 
-from PySide6.QtWidgets import QFrame, QVBoxLayout, QWidget
+from obox.qt import QFrame, QVBoxLayout, QWidget
 
 from ..api.component import ComponentEventMessage
 from ..api.errors import OboxError

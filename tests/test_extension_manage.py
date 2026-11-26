@@ -8,7 +8,7 @@ import zipfile
 from pathlib import Path
 
 import pytest
-from PySide6.QtWidgets import QWidget
+from obox.qt import QWidget
 
 from obox.api.extensions import (
     EXTENSIONS_CHANGED_MSG,

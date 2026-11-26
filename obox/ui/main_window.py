@@ -5,10 +5,10 @@ from __future__ import annotations
 import ctypes
 from pathlib import Path
 
-from PySide6.QtCore import QPoint, QRect, Qt, Signal
-from PySide6.QtGui import QIcon, QMouseEvent
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import (
+from obox.qt import event_global_pos, event_pos, QPoint, QRect, Qt, Signal
+from obox.qt import QIcon, QMouseEvent
+from obox.qt import QTimer
+from obox.qt import (
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -121,18 +121,18 @@ class MainWindow(QWidget):
 
     def mousePressEvent(self, event: QMouseEvent) -> None:  # noqa: N802
         if event.button() == Qt.MouseButton.LeftButton and not self.isMaximized():
-            edges = self._edge_at(event.position().toPoint())
+            edges = self._edge_at(event_pos(event).toPoint())
             if edges:
                 self._resize_edges = edges
-                self._resize_origin = event.globalPosition().toPoint()
+                self._resize_origin = event_global_pos(event).toPoint()
                 self._resize_geometry = self.geometry()
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:  # noqa: N802
         if self._resize_edges and self._resize_origin is not None and self._resize_geometry is not None:
-            self._resize_to(event.globalPosition().toPoint())
+            self._resize_to(event_global_pos(event).toPoint())
             return
-        self._update_cursor(self._edge_at(event.position().toPoint()))
+        self._update_cursor(self._edge_at(event_pos(event).toPoint()))
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:  # noqa: N802

@@ -21,7 +21,7 @@ def main(argv: list[str] | None = None) -> int:
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
         os.environ.setdefault("QT_QPA_FONTDIR", "C:/Windows/Fonts")
 
-    from PySide6.QtWidgets import QApplication
+    from obox.qt import QApplication
 
     from obox.app import OboxApp
 
@@ -63,18 +63,18 @@ def main(argv: list[str] | None = None) -> int:
             check("点击侧栏切换到扩展视图", switched, str(obox.window.view_ids()))
         driver.screenshot(obox.window, f"{obox.theme_name}_01_launch")
 
-        status = obox.registry.lookup("demo.obox", "demo-status")
+        status = obox.registry.lookup("demo.chenzhi", "demo-status")
         text_of = getattr(status, status.state_accessors["text"][0])
         check("初始文本", text_of() == "等待点击", str(text_of()))
-        title = obox.registry.lookup("demo.obox", "demo-title").text()
+        title = obox.registry.lookup("demo.chenzhi", "demo-title").text()
         check("i18n 文案已替换", title == "obox 示范扩展", title)
-        button = obox.registry.lookup("demo.obox", "demo-btn")
+        button = obox.registry.lookup("demo.chenzhi", "demo-btn")
         driver.click(button.widget)
         changed = driver.wait_until(lambda: text_of() == "按钮被点击了", timeout=10, interval=0.005)
         check("点击事件往返", changed, str(text_of()))
         driver.screenshot(obox.window, f"{obox.theme_name}_02_click")
 
-        field = obox.registry.lookup("demo.obox", "demo-input")
+        field = obox.registry.lookup("demo.chenzhi", "demo-input")
         value_of = getattr(field, field.state_accessors["value"][0])
         driver.type_text(field.widget, "obox")
         typed = driver.wait_until(lambda: value_of() == "obox", timeout=5)
@@ -97,7 +97,7 @@ def main(argv: list[str] | None = None) -> int:
                     timeout=5,
                 )
                 driver.screenshot(obox.window, f"{obox.theme_name}_05_gallery")
-                from PySide6.QtWidgets import QScrollArea
+                from obox.qt import QScrollArea
 
                 view = obox.window._views[gallery_ids[0]]
                 scrolls = [view] if isinstance(view, QScrollArea) else view.findChildren(QScrollArea)
@@ -105,34 +105,34 @@ def main(argv: list[str] | None = None) -> int:
                     bar = scrolls[0].verticalScrollBar()
                     bar.setValue(int(bar.maximum() * 0.55))
                     driver.screenshot(obox.window, f"{obox.theme_name}_06_gallery_cards")
-                    card_a = obox.registry.lookup("gallery.obox", "g-card-a")
-                    card_b = obox.registry.lookup("gallery.obox", "g-card-b")
+                    card_a = obox.registry.lookup("gallery.chenzhi", "g-card-a")
+                    card_b = obox.registry.lookup("gallery.chenzhi", "g-card-b")
                     driver.click(card_a.widget)
                     driver.click(card_b.widget)
-                    choice = obox.registry.lookup("gallery.obox", "g-choice")
+                    choice = obox.registry.lookup("gallery.chenzhi", "g-choice")
                     picked = choice.value()
                     check("多选选中两张卡片", len(picked) == 2, str(picked))
                     driver.screenshot(obox.window, f"{obox.theme_name}_07_choice_selected")
-                    top_alert = obox.registry.lookup("gallery.obox", "g-alert-info")
+                    top_alert = obox.registry.lookup("gallery.chenzhi", "g-alert-info")
                     top_alert.set_visible(True)
                     check("顶部提醒可见", top_alert.is_visible(), "g-alert-info")
                     driver.screenshot(obox.window, f"{obox.theme_name}_08_alert_top")
                     top_alert.set_visible(False)
-                    bottom_alert = obox.registry.lookup("gallery.obox", "g-alert-error")
+                    bottom_alert = obox.registry.lookup("gallery.chenzhi", "g-alert-error")
                     bottom_alert.set_visible(True)
                     check("底部提醒可见", bottom_alert.is_visible(), "g-alert-error")
                     driver.screenshot(obox.window, f"{obox.theme_name}_09_alert_bottom")
                     bottom_alert.set_visible(False)
-                    free_card = obox.registry.lookup("gallery.obox", "g-card-free")
+                    free_card = obox.registry.lookup("gallery.chenzhi", "g-card-free")
                     scrolls[0].ensureWidgetVisible(free_card.widget, 60, 60)
                     driver.click(free_card.widget)
                     check("独立卡片可见", free_card.widget.isVisible(), "g-card-free")
                     driver.screenshot(obox.window, f"{obox.theme_name}_10_card")
-        modal = obox.registry.lookup("gallery.obox", "g-modal")
-        open_modal = obox.registry.lookup("gallery.obox", "g-modal-open")
+        modal = obox.registry.lookup("gallery.chenzhi", "g-modal")
+        open_modal = obox.registry.lookup("gallery.chenzhi", "g-modal-open")
         if modal is not None and open_modal is not None:
-            from PySide6.QtCore import Qt
-            from PySide6.QtTest import QTest
+            from obox.qt import Qt
+            from obox.qt import QTest
 
             driver.click(open_modal.widget)
             shown = driver.wait_until(lambda: modal.is_visible(), timeout=5)
@@ -143,14 +143,14 @@ def main(argv: list[str] | None = None) -> int:
             check("Esc 关闭浮层", esc_closed, "g-modal")
             driver.click(open_modal.widget)
             driver.wait_until(lambda: modal.is_visible(), timeout=5)
-            save_button = obox.registry.lookup("gallery.obox", "g-modal-ok")
+            save_button = obox.registry.lookup("gallery.chenzhi", "g-modal-ok")
             driver.click(save_button.widget)
             button_closed = driver.wait_until(lambda: not modal.is_visible(), timeout=5)
             check("底部按钮关闭浮层", button_closed, "g-modal")
 
             demo_rail = {button.toolTip(): button for button in obox.window.rail_buttons()}
-            legacy = obox.registry.lookup("demo.obox", "demo-modal")
-            legacy_button = obox.registry.lookup("demo.obox", "demo-modal-btn")
+            legacy = obox.registry.lookup("demo.chenzhi", "demo-modal")
+            legacy_button = obox.registry.lookup("demo.chenzhi", "demo-modal-btn")
             if "示范" in demo_rail:
                 driver.click(demo_rail["示范"])
                 driver.wait_until(
@@ -190,8 +190,8 @@ def main(argv: list[str] | None = None) -> int:
             driver.type_text(search.widget, "zzz")
             filtered = driver.wait_until(lambda: not _card_present(), timeout=5)
             check("无匹配时卡片被过滤", filtered, str(_card_present()))
-            from PySide6.QtCore import Qt
-            from PySide6.QtTest import QTest
+            from obox.qt import Qt
+            from obox.qt import QTest
 
             QTest.keyClick(search.widget, Qt.Key.Key_A, Qt.KeyboardModifier.ControlModifier)
             QTest.keyClick(search.widget, Qt.Key.Key_Backspace)
@@ -207,7 +207,7 @@ def main(argv: list[str] | None = None) -> int:
                 opened = driver.wait_until(lambda: _window() is not None, timeout=10)
                 check("点击卡片打开应用窗口", opened, str(list(obox._app_windows)))
                 if opened:
-                    title = obox.registry.lookup("demo.obox", "note-title").text()
+                    title = obox.registry.lookup("demo.chenzhi", "note-title").text()
                     check("应用窗口渲染扩展 UI", title == "示范笔记", title)
                     driver.screenshot(_window(), f"{obox.theme_name}_13_app_window")
                 for window in list(obox._app_windows.values()):
@@ -229,8 +229,8 @@ def main(argv: list[str] | None = None) -> int:
             check("设置页分类已渲染", settings_ready, str(obox.window.view_ids()))
             driver.screenshot(obox.window, f"{obox.theme_name}_15_settings")
             if settings_ready:
-                from PySide6.QtCore import Qt
-                from PySide6.QtTest import QTest
+                from obox.qt import Qt
+                from obox.qt import QTest
 
                 search_box = obox.registry.lookup("settings.obox", "settings-search")
                 search_box.widget.setText("主题")
@@ -266,9 +266,9 @@ def main(argv: list[str] | None = None) -> int:
                         driver.click(appearance.widget)
 
         from types import SimpleNamespace
-        from PySide6.QtCore import Qt as _Qt
-        from PySide6.QtTest import QTest as _QTest
-        from PySide6.QtWidgets import QPushButton
+        from obox.qt import Qt as _Qt
+        from obox.qt import QTest as _QTest
+        from obox.qt import QPushButton
 
         ext_ready = driver.wait_until(lambda: "extensions.main" in obox.window.view_ids(), timeout=10)
         check("扩展管理已挂载", ext_ready, str(obox.window.view_ids()))
@@ -336,7 +336,7 @@ def main(argv: list[str] | None = None) -> int:
         )
         check("切到 zh-HK", obox.i18n.language == "zh-HK", obox.i18n.language)
         fallback_title = driver.wait_until(
-            lambda: obox.registry.lookup("demo.obox", "demo-title").text() == "obox 示范扩展",
+            lambda: obox.registry.lookup("demo.chenzhi", "demo-title").text() == "obox 示范扩展",
             timeout=6,
         )
         check("zh-HK 回退 zh-CN", fallback_title, obox.i18n.language)
@@ -349,10 +349,10 @@ def main(argv: list[str] | None = None) -> int:
         )
         if obox.i18n.language == "en-US":
             driver.wait_until(
-                lambda: obox.registry.lookup("demo.obox", "demo-title").text() == "obox demo extension",
+                lambda: obox.registry.lookup("demo.chenzhi", "demo-title").text() == "obox demo extension",
                 timeout=5,
             )
-            english = obox.registry.lookup("demo.obox", "demo-title").text()
+            english = obox.registry.lookup("demo.chenzhi", "demo-title").text()
             check("切到英文后视图重建", english == "obox demo extension", english)
             check(
                 "切语言后仍在原视图",
@@ -431,7 +431,7 @@ def main(argv: list[str] | None = None) -> int:
             obox.bus.send(
                 _Msg(
                     src="obox",
-                    dst="chartdemo.obox",
+                    dst="chartdemo.chenzhi",
                     msg_id="COMPONENT_EVENT_MSG",
                     payload={"id": "demo-line", "event": "click", "value": ""},
                 )
@@ -439,7 +439,7 @@ def main(argv: list[str] | None = None) -> int:
 
             def _chart_ready() -> bool:
                 try:
-                    chart = obox.registry.lookup("chartdemo.obox", "demo-chart")
+                    chart = obox.registry.lookup("chartdemo.chenzhi", "demo-chart")
                     return bool(chart._figure and chart._figure.axes and len(chart._figure.axes[0].lines) >= 2)
                 except Exception:
                     return False
@@ -451,12 +451,12 @@ def main(argv: list[str] | None = None) -> int:
         from obox.api.picker import picker_open_message
 
         picker_req = obox.bus.request(
-            picker_open_message("demo.obox", mode="dir", start_path=str(Path.home()), title="选择文件夹")
+            picker_open_message("demo.chenzhi", mode="dir", start_path=str(Path.home()), title="选择文件夹")
         )
         picker_ready = driver.wait_until(lambda: bool(obox._pickers), timeout=5)
         check("选择器已打开", picker_ready, "")
         if picker_ready:
-            from PySide6.QtCore import Qt as _Qt
+            from obox.qt import Qt as _Qt
 
             dialog = obox._pickers[0]
             check(

@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -27,10 +28,10 @@ def _render_icon() -> Path | None:
         import os
 
         os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-        from PySide6.QtCore import QByteArray, Qt
-        from PySide6.QtGui import QImage, QPainter
-        from PySide6.QtSvg import QSvgRenderer
-        from PySide6.QtWidgets import QApplication
+        from obox.qt import QByteArray, Qt
+        from obox.qt import QImage, QPainter
+        from obox.qt import QSvgRenderer
+        from obox.qt import QApplication
 
         QApplication.instance() or QApplication([])
         renderer = QSvgRenderer(QByteArray(source.read_bytes()))
@@ -51,7 +52,9 @@ def _render_icon() -> Path | None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="编译 obox standalone")
     parser.add_argument("--force", action="store_true", help="已存在也重新编译")
+    parser.add_argument("--qt", choices=["pyside6", "pyqt5"], default="pyside6", help="选择 Qt 绑定")
     args = parser.parse_args(argv)
+    os.environ["OBOX_QT"] = args.qt
 
     if (DIST / "obox.exe").exists() and not args.force:
         print(f"[exe] 已存在：{DIST / 'obox.exe'}")
@@ -66,7 +69,8 @@ def main(argv: list[str] | None = None) -> int:
         "-m",
         "nuitka",
         "--standalone",
-        "--enable-plugin=pyside6",
+        f"--enable-plugin={'pyqt5' if args.qt == 'pyqt5' else 'pyside6'}",
+        f"--nofollow-import-to={'PySide6' if args.qt == 'pyqt5' else 'PyQt5'}",
         "--include-package=obox",
         "--include-package-data=obox",
         "--windows-console-mode=disable",

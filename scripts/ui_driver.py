@@ -7,9 +7,9 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QWidget
+from obox.qt import Qt
+from obox.qt import QTest
+from obox.qt import QWidget
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 PICS_DIR = PROJECT_ROOT / "tmp" / "pics"

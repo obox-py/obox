@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QRectF, Qt, Signal
-from PySide6.QtGui import QPainter, QPen
-from PySide6.QtWidgets import QVBoxLayout, QWidget
+from obox.qt import QRectF, Qt, Signal
+from obox.qt import QPainter, QPen
+from obox.qt import QVBoxLayout, QWidget
 
 from .. import palette
 from .base import Component, color

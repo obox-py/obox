@@ -71,6 +71,19 @@ uv run obox --version
 # 期望输出：obox 1.0.0
 ```
 
+## Qt 绑定选择
+
+obox 默认使用 PySide6，也可以切到 PyQt5，界面与扩展 API 完全一致：
+
+```bash
+uv run obox                      # 默认 PySide6
+uv run obox --qt pyqt5           # 本次以 PyQt5 运行
+OBOX_QT=pyqt5 uv run pytest -q -o qt_api=pyqt5   # PyQt5 下跑测试
+uv sync --extra pyqt5            # 安装 PyQt5（可选依赖）
+```
+
+构建时同开关：`uv run python scripts/build_installer.py --qt pyqt5`，产物名带绑定与架构。
+
 ## 快速开始
 
 ```bash
@@ -137,6 +150,16 @@ obox/
 ├── pyproject.toml
 └── README.md
 ```
+
+## 扩展开发调试
+
+不打包、不安装也能调试扩展：
+
+```bash
+uv run obox --dev-extension D:\work\hello --debug
+```
+
+VS Code 打开目标扩展的 extension.py，选「obox: 调试当前扩展（启动 obox + attach）」（启动 obox + attach 宿主）；也可选「obox: 调试选择目录的扩展（启动 obox + attach）」手动填目录，或先起 obox 后选「obox: 仅 attach 扩展宿主（obox 已运行）」，在开发目录的 extension.py 打断点即可；保存文件会自动重载。开发目录写入配置，下次启动继续加载；`--no-dev-reload` 可关闭自动重载。配置见 `.vscode/launch.json`。
 
 ## 扩展开发
 

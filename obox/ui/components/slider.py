@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QSlider
+from obox.qt import Qt
+from obox.qt import QSlider
 
 from .base import Component
 

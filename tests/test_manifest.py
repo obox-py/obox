@@ -12,6 +12,13 @@ from obox.extensions.manifest import load_manifest
 DEMO = Path(__file__).resolve().parent.parent / "extensions" / "demo"
 
 
+pytestmark_demo = pytest.mark.skipif(
+    not (DEMO / "extension.json").is_file(),
+    reason="demo extension missing",
+)
+
+
+@pytestmark_demo
 def test_demo_manifest_valid() -> None:
     manifest = load_manifest(DEMO)
     assert manifest.extension_id == "demo.obox"

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+from obox.qt import Qt
+from obox.qt import QDialog, QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 
 class ModalPanelDialog(QDialog):

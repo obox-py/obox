@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QScrollArea, QVBoxLayout, QWidget
+from obox.qt import QTest
+from obox.qt import QScrollArea, QVBoxLayout, QWidget
 
 from obox.api.component import decode_message
 from obox.api.view import (

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtWidgets import QWidget
+from obox.qt import QWidget
 
 from .base import Component
 from .card import CardWidget, card_value

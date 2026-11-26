@@ -7,7 +7,7 @@ import stat
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QThread, Signal
+from obox.qt import QThread, Signal
 
 
 def local_entries(path: Path, extensions: list[str], mode: str) -> list[dict[str, Any]]:

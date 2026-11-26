@@ -5,9 +5,9 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from PySide6.QtCore import QPointF, QSize, Qt
-from PySide6.QtGui import QColor, QIcon, QPainter, QPen, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QToolButton, QVBoxLayout, QWidget
+from obox.qt import QPointF, QSize, Qt
+from obox.qt import QColor, QIcon, QPainter, QPen, QPixmap
+from obox.qt import QHBoxLayout, QLabel, QToolButton, QVBoxLayout, QWidget
 
 from .. import palette
 from .base import Component
@@ -262,7 +262,7 @@ class ChartComponent(Component):
         if series:
             axis.legend()
         axis.grid(True, color=palette.LINE, linewidth=0.6)
-        self._canvas.draw_idle()
+        self._canvas.draw()
 
     def _render_code(self, axis) -> None:
         """执行扩展提供的 matplotlib 代码；fig/ax/plt 可直接用。"""
@@ -283,7 +283,7 @@ class ChartComponent(Component):
             error_axis.text(
                 0.5, 0.5, f"图表代码错误：{exc}", ha="center", va="center", wrap=True, fontsize=10
             )
-        self._canvas.draw_idle()
+        self._canvas.draw()
 
     def code(self) -> str:
         return self._code
@@ -322,7 +322,7 @@ class ChartComponent(Component):
         cx, cy = event.xdata, event.ydata
         event.inaxes.set_xlim([cx - (cx - xlim[0]) * scale, cx + (xlim[1] - cx) * scale])
         event.inaxes.set_ylim([cy - (cy - ylim[0]) * scale, cy + (ylim[1] - cy) * scale])
-        self._canvas.draw_idle()
+        self._canvas.draw()
 
     def _on_press(self, event) -> None:
         if getattr(self, "_toolbar", None) is not None and self._toolbar.mode:
@@ -346,7 +346,7 @@ class ChartComponent(Component):
             ylim = event.inaxes.get_ylim()
             event.inaxes.set_xlim(xlim[0] + dx, xlim[1] + dx)
             event.inaxes.set_ylim(ylim[0] + dy, ylim[1] + dy)
-            self._canvas.draw_idle()
+            self._canvas.draw()
             return
         if event.inaxes is None or event.xdata is None:
             return
@@ -374,7 +374,7 @@ class ChartComponent(Component):
                     textcoords="offset points",
                     fontsize=8,
                 )
-        self._canvas.draw_idle()
+        self._canvas.draw()
 
     def on_click(self, callback) -> None:
         self._callbacks = getattr(self, "_callbacks", [])

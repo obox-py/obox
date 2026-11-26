@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtWidgets import QCheckBox
+from obox.qt import QCheckBox
 
 from .modal_dialog import ModalPanelDialog
 

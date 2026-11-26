@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import QEvent, QObject, QPointF, Qt, Signal
-from PySide6.QtGui import QColor, QPainter, QPen
-from PySide6.QtWidgets import (
+from obox.qt import event_global_pos, event_pos, QEvent, QObject, QPointF, Qt, Signal
+from obox.qt import QColor, QPainter, QPen
+from obox.qt import (
     QFrame,
     QSizePolicy,
     QGraphicsOpacityEffect,
@@ -18,7 +18,7 @@ from PySide6.QtWidgets import (
 )
 
 from .. import palette
-from .base import Component, animate
+from .base import Component, animate, color
 from .button import ButtonWidget
 
 _VARIANTS = {
@@ -71,7 +71,7 @@ class ModalOverlay(QFrame):
         if (
             event.button() == Qt.MouseButton.LeftButton
             and self.handler is not None
-            and self.handler.handle_overlay_click(event.position())
+            and self.handler.handle_overlay_click(event_pos(event))
         ):
             return
         super().mousePressEvent(event)
@@ -100,9 +100,9 @@ class ModalCard(QFrame):
         return int(window.width() * _RATIO), int(window.height() * _RATIO)
 
     def mousePressEvent(self, event) -> None:  # noqa: N802 - Qt 接口
-        if event.button() == Qt.MouseButton.LeftButton and self._in_handle(event.position()):
+        if event.button() == Qt.MouseButton.LeftButton and self._in_handle(event_pos(event)):
             self._resizing = True
-            self._origin = event.globalPosition()
+            self._origin = event_global_pos(event)
             self._start = (self.width(), self.height())
             event.accept()
             return
@@ -110,7 +110,7 @@ class ModalCard(QFrame):
 
     def mouseMoveEvent(self, event) -> None:  # noqa: N802 - Qt 接口
         if self._resizing:
-            delta = event.globalPosition() - self._origin
+            delta = event_global_pos(event) - self._origin
             max_width, max_height = self._bounds()
             width = max(_MIN_WIDTH, min(max_width, int(self._start[0] + delta.x())))
             height = max(_MIN_HEIGHT, min(max_height, int(self._start[1] + delta.y())))
@@ -119,7 +119,7 @@ class ModalCard(QFrame):
             return
         self.setCursor(
             Qt.CursorShape.SizeFDiagCursor
-            if self._in_handle(event.position())
+            if self._in_handle(event_pos(event))
             else Qt.CursorShape.ArrowCursor
         )
         super().mouseMoveEvent(event)
@@ -135,7 +135,7 @@ class ModalCard(QFrame):
         super().paintEvent(event)
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        pen = QPen(palette.TEXT_MUTED)
+        pen = QPen(color(palette.TEXT_MUTED))
         pen.setWidthF(1.0)
         painter.setPen(pen)
         right, bottom = self.width() - 4.0, self.height() - 4.0
@@ -166,7 +166,7 @@ class _MaxButton(QWidget):
     def paintEvent(self, event) -> None:  # noqa: N802 - Qt 接口
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        pen = QPen(palette.TEXT_MUTED)
+        pen = QPen(color(palette.TEXT_MUTED))
         pen.setWidthF(1.2)
         painter.setPen(pen)
         if self._max:

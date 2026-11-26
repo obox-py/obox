@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from PySide6.QtWidgets import QLayout, QWidget
+from obox.qt import QLayout, QWidget
 
 EventCallback = Callable[[dict[str, Any]], None]
 
@@ -72,7 +72,7 @@ def border_css(attrs: dict[str, str], default: str = "all", color: str = "rgba(0
 
 def color(value: str):
     """把 rgba()/rgb()/hex 字符串转成 QColor；绘制时用。"""
-    from PySide6.QtGui import QColor
+    from obox.qt import QColor
 
     text = value.strip()
     if text.startswith("rgba(") or text.startswith("rgb("):
@@ -84,7 +84,7 @@ def color(value: str):
     return QColor(text)
 def animate(widget, prop: bytes, start: float, end: float, duration: int = 160):
     """对自定义 Qt 属性做一次 OutCubic 过渡；动画结束自动回收。"""
-    from PySide6.QtCore import QEasingCurve, QPropertyAnimation
+    from obox.qt import QEasingCurve, QPropertyAnimation
 
     animation = QPropertyAnimation(widget, prop, widget)
     animation.setDuration(duration)

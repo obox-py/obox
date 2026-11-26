@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import pytest
-from PySide6.QtCore import QRect, QSize
-from PySide6.QtWidgets import QWidget
+from obox.qt import QRect, QSize
+from obox.qt import QWidget
 
 from obox.ui.components.flex import FlexLayout
 

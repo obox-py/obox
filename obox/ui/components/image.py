@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QPixmap
-from PySide6.QtWidgets import QLabel
+from obox.qt import Qt
+from obox.qt import QPixmap
+from obox.qt import QLabel
 
 from .base import Component
 

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import QPoint, QPointF, QRectF, QSize, Qt, Signal
-from PySide6.QtGui import QColor, QIcon, QMouseEvent, QPainter, QPixmap
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QMenu, QPushButton, QWidget
+from obox.qt import event_global_pos, event_pos, icon_pixmap, QPoint, QPointF, QRectF, QSize, Qt, Signal
+from obox.qt import QColor, QIcon, QMouseEvent, QPainter, QPixmap
+from obox.qt import QHBoxLayout, QLabel, QMenu, QPushButton, QWidget
 
 from .icons import tinted_pixmap
 
@@ -146,7 +146,7 @@ class TitleBar(QWidget):
     def set_icon(self, icon_path: str) -> None:
         """应用图标保持原色：obox 的 svg 是多色的，不做单色重染。"""
         if icon_path and Path(icon_path).exists():
-            pixmap = QIcon(icon_path).pixmap(QSize(18, 18), self.devicePixelRatioF())
+            pixmap = icon_pixmap(QIcon(icon_path), QSize(18, 18), self.devicePixelRatioF())
             self._icon_label.setPixmap(pixmap)
 
     def set_maximized(self, maximized: bool) -> None:
@@ -154,8 +154,8 @@ class TitleBar(QWidget):
         self._max_button.setToolTip("还原" if maximized else "最大化")
 
     def mousePressEvent(self, event: QMouseEvent) -> None:  # noqa: N802
-        if event.button() == Qt.MouseButton.LeftButton and not self._on_button(event.position()):
-            self._drag_origin = event.globalPosition().toPoint() - self.window().pos()
+        if event.button() == Qt.MouseButton.LeftButton and not self._on_button(event_pos(event)):
+            self._drag_origin = event_global_pos(event).toPoint() - self.window().pos()
         super().mousePressEvent(event)
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:  # noqa: N802
@@ -163,7 +163,7 @@ class TitleBar(QWidget):
             window = self.window()
             if window.isMaximized():
                 window.showNormal()
-            window.move(event.globalPosition().toPoint() - self._drag_origin)
+            window.move(event_global_pos(event).toPoint() - self._drag_origin)
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:  # noqa: N802
@@ -171,7 +171,7 @@ class TitleBar(QWidget):
         super().mouseReleaseEvent(event)
 
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:  # noqa: N802
-        if event.button() == Qt.MouseButton.LeftButton and not self._on_button(event.position()):
+        if event.button() == Qt.MouseButton.LeftButton and not self._on_button(event_pos(event)):
             self.maximize_requested.emit()
         super().mouseDoubleClickEvent(event)
 

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import QObject, Signal
-from PySide6.QtNetwork import QLocalSocket
+from obox.qt import QObject, Signal
+from obox.qt import QLocalSocket
 
 from ...api.errors import ProtocolError
 from .framing import FrameDecoder, encode_frame

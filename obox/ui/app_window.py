@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import ctypes
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QFrame, QLabel, QScrollArea, QVBoxLayout, QWidget
+from obox.qt import Qt
+from obox.qt import QFrame, QLabel, QScrollArea, QVBoxLayout, QWidget
 
 from .title_bar import TitleBar
 

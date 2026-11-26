@@ -15,7 +15,7 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-from PySide6.QtCore import QCoreApplication, QObject, QTimer
+from obox.qt import QCoreApplication, QObject, QTimer
 
 from ..core.bus import MessageBus
 from ..core.ipc.client import IpcClient
@@ -77,9 +77,11 @@ class ExtensionHost(QObject):
         client: IpcClient,
         storage_root: Path,
         system_dir: Path | None = None,
+        dev_dirs: list[Path] | None = None,
     ) -> None:
         super().__init__()
         self._extensions_dir = extensions_dir
+        self._dev_dirs = list(dev_dirs or [])
         self._system_dir = system_dir or extensions_dir
         self._install_dir = install_dir
         self._client = client
@@ -287,6 +289,16 @@ class ExtensionHost(QObject):
                 )
                 continue
             results.extend(self._activate(info.manifest, info.directory, info.origin))
+        for directory in self._dev_dirs:
+            try:
+                manifest = load_manifest(directory)
+            except Exception as exc:
+                results.append({"id": directory.name, "status": "invalid", "error": str(exc)})
+                continue
+            extension_id = manifest.extension_id
+            if extension_id in self._modules:
+                self._deactivate(extension_id)
+            results.extend(self._activate(manifest, directory, "dev"))
         self._client.send(
             {
                 "type": "status",
@@ -338,15 +350,15 @@ class ExtensionHost(QObject):
             self._origins[manifest.extension_id] = origin
             missing = self._missing_contributions(manifest)
             if missing:
-                return [{**self._describe(manifest), "status": "failed", "error": missing}]
-            return [{**self._describe(manifest), "status": "active"}]
+                return [{**self._describe(manifest), "status": "failed", "error": missing, "origin": origin}]
+            return [{**self._describe(manifest), "status": "active", "origin": origin}]
         except Exception as exc:  # 单个扩展失败不影响其他扩展
             self._views.unregister_owner(manifest.extension_id)
             self._commands.unregister_owner(manifest.extension_id)
             self._manifests.pop(manifest.extension_id, None)
             self._i18n.pop(manifest.extension_id, None)
             self._bus.local_ids.discard(manifest.extension_id)
-            return [{**self._describe(manifest), "status": "failed", "error": str(exc)}]
+            return [{**self._describe(manifest), "status": "failed", "error": str(exc), "origin": origin}]
 
     def _describe(self, manifest: Manifest) -> dict[str, Any]:
         return {
@@ -442,6 +454,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--system-dir", default="")
     parser.add_argument("--install-dir", required=True)
     parser.add_argument("--storage-dir", required=True)
+    parser.add_argument("--dev-dir", action="append", default=[], help="开发中的扩展目录，可重复")
     args = parser.parse_args(argv)
 
     app = QCoreApplication(sys.argv[:1])
@@ -452,6 +465,7 @@ def main(argv: list[str] | None = None) -> int:
         client,
         Path(args.storage_dir),
         Path(args.system_dir) if args.system_dir else None,
+        [Path(item) for item in args.dev_dir],
     )
     client.frame_received.connect(host.receive_frame)
     client.connected.connect(host.start)

@@ -4,11 +4,18 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtWidgets import QWidget
+import pytest
+
+from obox.qt import QWidget
 
 from obox.app import OboxApp
 
 ROOT = Path(__file__).resolve().parent.parent
+
+pytestmark = pytest.mark.skipif(
+    not (ROOT / "extensions" / "demo" / "extension.json").is_file(),
+    reason="示例扩展不在本机（用户扩展不入主仓）",
+)
 
 
 def _app(tmp_path, language: str = "zh-CN") -> OboxApp:

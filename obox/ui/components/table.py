@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtWidgets import QAbstractItemView, QTableWidget, QTableWidgetItem
+from obox.qt import QAbstractItemView, QTableWidget, QTableWidgetItem
 
 from .. import palette
 from .base import Component, border_css

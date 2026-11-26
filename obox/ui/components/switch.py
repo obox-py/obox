@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import Property, QRectF, QSize, Qt
-from PySide6.QtGui import QColor, QPainter
-from PySide6.QtWidgets import QAbstractButton, QSizePolicy
+from obox.qt import Property, QRectF, QSize, Qt
+from obox.qt import QColor, QPainter
+from obox.qt import QAbstractButton, QSizePolicy
 
 from .. import palette
 from .base import Component, animate, color

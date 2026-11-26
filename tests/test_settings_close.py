@@ -5,9 +5,9 @@ from __future__ import annotations
 from pathlib import Path
 from types import SimpleNamespace
 
-from PySide6.QtCore import Qt
-from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QCheckBox, QDialog, QPushButton, QWidget
+from obox.qt import Qt
+from obox.qt import QTest
+from obox.qt import QCheckBox, QDialog, QPushButton, QWidget
 
 from obox.app import OboxApp
 from obox.ui.close_dialog import CloseDialog

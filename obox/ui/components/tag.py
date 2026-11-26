@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtWidgets import QLabel, QSizePolicy
+from obox.qt import QLabel, QSizePolicy
 
 from .. import palette
 from .base import Component

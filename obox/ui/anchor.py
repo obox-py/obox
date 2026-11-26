@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QEasingCurve, QObject, QPropertyAnimation, Signal
-from PySide6.QtWidgets import QScrollArea, QWidget
+from obox.qt import QEasingCurve, QObject, QPropertyAnimation, Signal
+from obox.qt import QScrollArea, QWidget
 
 DEFAULT_OFFSET = 64
 DEFAULT_DURATION = 600

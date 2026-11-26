@@ -1,0 +1,87 @@
+{
+  "version": "0.2.0",
+  "inputs": [
+    {
+      "id": "devDir",
+      "type": "promptString",
+      "description": "选择要调试的扩展开发目录（含 extension.json）",
+      "default": "${workspaceFolder}/extensions/pickerdemo"
+    }
+  ],
+  "configurations": [
+    {
+      "name": "obox: 仅 attach 扩展宿主（obox 已运行）",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "127.0.0.1",
+        "port": 5678
+      },
+      "justMyCode": false,
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}",
+          "remoteRoot": "${workspaceFolder}"
+        }
+      ]
+    },
+    {
+      "name": "obox: 启动当前扩展并等待 attach",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "obox.main",
+      "args": [
+        "--dev-extension",
+        "${fileDirname}",
+        "--debug",
+        "--debug-port",
+        "5678",
+        "--no-dev-reload"
+      ],
+      "console": "integratedTerminal",
+      "env": {
+        "OBOX_QT": "pyside6",
+        "PYTHONUTF8": "1"
+      },
+      "justMyCode": true
+    },
+    {
+      "name": "obox: 启动选择目录并等待 attach",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "obox.main",
+      "args": [
+        "--dev-extension",
+        "${input:devDir}",
+        "--debug",
+        "--debug-port",
+        "5678",
+        "--no-dev-reload"
+      ],
+      "console": "integratedTerminal",
+      "env": {
+        "OBOX_QT": "pyside6",
+        "PYTHONUTF8": "1"
+      },
+      "justMyCode": true
+    }
+  ],
+  "compounds": [
+    {
+      "name": "obox: 调试当前扩展（启动 obox + attach）",
+      "configurations": [
+        "obox: 启动当前扩展并等待 attach",
+        "obox: 仅 attach 扩展宿主（obox 已运行）"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "obox: 调试选择目录的扩展（启动 obox + attach）",
+      "configurations": [
+        "obox: 启动选择目录并等待 attach",
+        "obox: 仅 attach 扩展宿主（obox 已运行）"
+      ],
+      "stopAll": true
+    }
+  ]
+}

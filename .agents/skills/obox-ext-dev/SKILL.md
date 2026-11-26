@@ -10,6 +10,7 @@ description: 开发 obox 扩展时使用。覆盖 extension.json 清单、Extens
 - 新建一个扩展目录（视图、命令、应用、设置贡献）
 - 把扩展从 main 容器迁到 sidebar，或补 i18n/打包
 - 排查扩展没被激活、视图不显示、事件收不到
+- 不安装、直接用 VS Code 断点调试开发目录
 
 ## 快速开始
 
@@ -22,6 +23,9 @@ uv run python .agents/skills/obox-ext-dev/scripts/check_extension.py extensions/
 
 # 运行（扩展放进 extensions/ 即被扫描）
 uv run obox
+
+# 调试开发目录（不安装）
+uv run obox --dev-extension D:\work\hello --debug
 ```
 
 ## 步骤
@@ -38,6 +42,8 @@ uv run obox
 - `references/context-api.md`：context 方法与消息
 - `references/oml.md`：标签、指令、绑定、事件
 - `references/i18n.md`：i18n.json 格式与 id 规则
+- `references/debugging.md`：开发目录加载、debugpy attach、launch.json 与排障
+- `templates/launch.json`：扩展仓库可直接复制的 attach 配置
 - `references/packaging.md`：打包与安装
 
 ## 模板

@@ -37,7 +37,7 @@ def test_local_entries_filter(tmp_path: Path) -> None:
 def test_dialog_is_window_modal_and_returns_path(qapp, tmp_path: Path) -> None:
     (tmp_path / "picked.txt").write_text("x", encoding="utf-8")
     dialog = PickerDialog({"mode": "file", "extensions": ["txt"], "multi": False, "title": "t", "start_path": str(tmp_path), "window_id": "", "ssh": None}, None)
-    from PySide6.QtCore import Qt
+    from obox.qt import Qt
 
     assert dialog.windowModality() == Qt.WindowModality.WindowModal
     for _ in range(200):

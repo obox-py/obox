@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from PySide6.QtCore import Qt
-from PySide6.QtTest import QTest
+from obox.qt import Qt
+from obox.qt import QTest
 
 import pytest
 
@@ -12,7 +12,10 @@ from obox.app import OboxApp
 ROOT = Path(__file__).resolve().parent.parent
 PYP = ROOT / ".theme" / "light" / "light.pyd"
 
-pytestmark = pytest.mark.skipif(not PYP.exists(), reason="需要先构建 .theme/light/light.pyd")
+pytestmark = pytest.mark.skipif(
+    not PYP.exists() or not (ROOT / "extensions" / "demo" / "extension.json").is_file(),
+    reason="需要 .theme/light/light.pyd 与 demo 示例扩展",
+)
 
 
 def _start(qtbot) -> OboxApp:

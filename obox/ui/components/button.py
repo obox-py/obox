@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import Property, QRect, QSize, Qt
-from PySide6.QtGui import QColor, QPainter, QPen
-from PySide6.QtWidgets import QAbstractButton, QSizePolicy
+from obox.qt import Property, QRect, QSize, Qt
+from obox.qt import QColor, QPainter, QPen
+from obox.qt import QAbstractButton, QSizePolicy
 
 from .. import palette
 from .base import Component, animate, color
@@ -91,7 +91,7 @@ class ButtonWidget(QAbstractButton):
             text_color, border = color(palette.ACCENT_TEXT), None
         elif self._variant == "danger":
             base, hovered = QColor(color(palette.DANGER)), _mix(QColor(color(palette.DANGER)), QColor("#ffffff"), 0.12)
-            text_color, border = "#ffffff", None
+            text_color, border = color("#ffffff"), None
         elif self._variant == "ghost":
             base, hovered = QColor(0, 0, 0, 0), QColor(color(palette.ACCENT_SOFT))
             text_color, border = color(palette.ACCENT), None

@@ -15,6 +15,8 @@ EXTENSIONS_CHANGED_MSG = "EXTENSIONS_CHANGED_MSG"
 EXTENSIONS_LIST_MSG = "EXTENSIONS_LIST_MSG"
 EXTENSIONS_MANAGE_MSG = "EXTENSIONS_MANAGE_MSG"
 EXTENSIONS_RESULT_MSG = "EXTENSIONS_RESULT_MSG"
+DEV_EXTENSION_ADD_MSG = "DEV_EXTENSION_ADD_MSG"
+DEV_EXTENSION_REMOVE_MSG = "DEV_EXTENSION_REMOVE_MSG"
 
 
 def install_extension_message(package: str) -> Message:
@@ -82,3 +84,10 @@ def extensions_manage_message(src: str, action: str, extension_id: str = "", ena
         msg_id=EXTENSIONS_MANAGE_MSG,
         payload={"action": action, "id": extension_id, "enabled": bool(enabled)},
     )
+
+def dev_extension_add_message(path: str) -> Message:
+    return Message(src=OB_BOX, dst=OB_BOX, msg_id=DEV_EXTENSION_ADD_MSG, payload={"path": str(path)})
+
+
+def dev_extension_remove_message(path: str) -> Message:
+    return Message(src=OB_BOX, dst=OB_BOX, msg_id=DEV_EXTENSION_REMOVE_MSG, payload={"path": str(path)})

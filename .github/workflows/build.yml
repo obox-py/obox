@@ -16,10 +16,16 @@ on:
 jobs:
   test:
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        qt: [pyside6, pyqt5]
+    env:
+      OBOX_QT: ${{ matrix.qt }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv sync
+      - run: uv sync ${{ matrix.qt == 'pyqt5' && '--extra pyqt5' || '' }}
       - run: uv run python scripts/build_theme.py light dark
       - run: uv run pytest -q
 
@@ -31,33 +37,41 @@ jobs:
         include:
           - os: windows-latest
             arch: x86_64
+            qt: pyside6
+          - os: windows-latest
+            arch: x86_64
+            qt: pyqt5
           - os: windows-11-arm
             arch: arm64
+            qt: pyside6
     runs-on: ${{ matrix.os }}
     continue-on-error: ${{ matrix.arch == 'arm64' }}
+    env:
+      OBOX_QT: ${{ matrix.qt }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v5
-      - run: uv sync
+      - run: uv sync ${{ matrix.qt == 'pyqt5' && '--extra pyqt5' || '' }}
       - name: Install NSIS
         shell: pwsh
         run: |
           choco install nsis -y --no-progress
           Add-Content $env:GITHUB_PATH "C:\Program Files (x86)\NSIS"
-      - run: uv run python scripts/build_installer.py
+      - run: uv run python scripts/build_installer.py --qt ${{ matrix.qt }}
       - name: Collect installer
         shell: pwsh
         env:
           REF_NAME: ${{ github.ref_name }}
           ARCH: ${{ matrix.arch }}
+          QT_BINDING: ${{ matrix.qt }}
         run: |
           New-Item -ItemType Directory -Force -Path dist-release | Out-Null
           Get-ChildItem -Path dist -Filter *.exe -Recurse | Select-Object -First 1 | ForEach-Object {
-            Copy-Item $_.FullName ("dist-release/obox-" + $env:REF_NAME + "-" + $env:ARCH + "-setup.exe")
+            Copy-Item $_.FullName ("dist-release/obox-" + $env:REF_NAME + "-" + $env:ARCH + "-" + $env:QT_BINDING + "-setup.exe")
           }
       - uses: actions/upload-artifact@v4
         with:
-          name: obox-installer-${{ matrix.arch }}
+          name: obox-installer-${{ matrix.arch }}-${{ matrix.qt }}
           path: dist-release/*.exe
 
   release:

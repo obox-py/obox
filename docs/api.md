@@ -1,6 +1,6 @@
 # obox 扩展 API
 
-扩展只通过 `obox.api` 下的模块与宿主交互；每个模块都是一个消息类型或一组消息构造函数。
+扩展只通过 `obox.api` 下的模块与宿主交互；每个模块都是一个消息类型或一组消息构造函数。扩展不要直接 import PySide6/PyQt5——obox 在两种绑定下都提供相同的 obox.api；确需 Qt 类型时用 `obox.qt`。
 
 | 模块 | 能力 |
 |---|---|
@@ -44,3 +44,18 @@ payload = request.result()        # {"paths": [...], "cancelled": bool, "error":
 ## 示例
 
 `extensions/pickerdemo` 提供本地/远端 × 文件/目录四个入口，可直接在侧栏「选择器示例」里试。完整调用约定见 `.agents/skills/obox-ext-dev/references/context-api.md`。
+
+## 开发调试
+
+- `--dev-extension PATH`：加载开发目录（可重复），不安装、不复制
+- `--debug` / `--debug-port` / `--no-debug-wait`：宿主用 debugpy 监听，VS Code attach
+- `--no-dev-reload`：关闭开发目录自动重载
+
+消息（obox 内部与工具可用）：
+
+| 消息 | payload | 作用 |
+|---|---|---|
+| `DEV_EXTENSION_ADD_MSG` | `{path}` | 挂载开发目录并写配置 |
+| `DEV_EXTENSION_REMOVE_MSG` | `{path}` | 移除开发目录并重启宿主 |
+
+详见 `.agents/skills/obox-ext-dev/references/debugging.md`。

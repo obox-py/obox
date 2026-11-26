@@ -8,10 +8,10 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QFileSystemWatcher, Qt, QTimer
-from PySide6.QtGui import QFont, QFontDatabase, QIcon
-from PySide6.QtGui import QGuiApplication
-from PySide6.QtWidgets import QApplication, QFrame, QScrollArea, QVBoxLayout, QWidget
+from obox.qt import QFileSystemWatcher, Qt, QTimer
+from obox.qt import QFont, QFontDatabase, QIcon
+from obox.qt import QGuiApplication
+from obox.qt import QApplication, QFrame, QScrollArea, QVBoxLayout, QWidget
 
 from .api.component import (
     COMPONENT_EVENT_MSG,
@@ -23,6 +23,8 @@ from .api.component import (
 from .api.errors import ComponentNotFound, ForbiddenOwner, OboxError, error_payload
 from .api.app import APP_LAUNCH_MSG, APP_LIST_MSG, APP_UI_MSG, APP_VIEW_DATA_MSG, app_open_message
 from .api.extensions import (
+    DEV_EXTENSION_ADD_MSG,
+    DEV_EXTENSION_REMOVE_MSG,
     EXTENSIONS_CHANGED_MSG,
     EXTENSIONS_MANAGE_MSG,
     EXTENSIONS_RESULT_MSG,
@@ -99,6 +101,11 @@ class OboxApp:
         language: str = "",
         provider: Any = None,
         data_dir: str | Path = "",
+        dev_extensions: list[str] | None = None,
+        debug: bool = False,
+        debug_port: int = 5678,
+        debug_wait: bool = True,
+        dev_reload: bool = True,
     ) -> None:
         self.project_root = project_root
         self.data_dir = Path(data_dir) if data_dir else project_root / ".obox"
@@ -128,6 +135,11 @@ class OboxApp:
         self._watcher = None
         self._watch_timer = None
         self._settings: dict[str, Any] = self._stored_settings()
+        self._dev_extensions = self._merge_dev_extensions(dev_extensions or [])
+        self._dev_reload = bool(dev_reload)
+        self._debug = bool(debug)
+        self._debug_port = int(debug_port)
+        self._debug_wait = bool(debug_wait)
         self.close_action = str(self._settings.get("obox.close_action") or "ask")
         if self.close_action not in CLOSE_ACTIONS:
             self.close_action = "ask"
@@ -156,6 +168,8 @@ class OboxApp:
         self.bus.on(APP_LAUNCH_MSG, self._on_app_launch)
         self.bus.on(VIEW_SCROLL_MSG, self._on_view_scroll)
         self.bus.on(PICKER_OPEN_MSG, self._on_picker_open)
+        self.bus.on(DEV_EXTENSION_ADD_MSG, self._on_dev_extension_add)
+        self.bus.on(DEV_EXTENSION_REMOVE_MSG, self._on_dev_extension_remove)
         self.bus.on(EXTENSION_CONFIG_MSG, lambda message: None)
         self.bus.on(EXTENSIONS_MANAGE_MSG, self._on_extensions_manage)
         self.bus.on(EXTENSIONS_CHANGED_MSG, self._on_extensions_changed)
@@ -165,7 +179,16 @@ class OboxApp:
         self.bus.on(VIEW_DATA_MSG, self._on_view_data)
         self.bus.on(SETTINGS_SET_MSG, self._on_settings_set)
         self.window = MainWindow(translator=lambda text: self.i18n.translate(text, "obox"))
-        self.supervisor = Supervisor(project_root, self.bus, self.extensions_root, data_dir=self.data_dir)
+        self.supervisor = Supervisor(
+            project_root,
+            self.bus,
+            self.extensions_root,
+            data_dir=self.data_dir,
+            dev_dirs=[Path(path) for path in self._dev_extensions],
+            debug=self._debug,
+            debug_port=self._debug_port,
+            debug_wait=self._debug_wait,
+        )
         self.supervisor.extensions_ready.connect(self._on_extensions_ready)
         self.supervisor.state_changed.connect(self._on_host_state)
 
@@ -329,6 +352,53 @@ class OboxApp:
         for path in (self.extensions_root, self.data_dir / "extensions"):
             if path.is_dir() and str(path) not in watched:
                 self._watcher.addPath(str(path))
+        if self._dev_reload:
+            for item in self._dev_extensions:
+                path = Path(item)
+                if path.is_dir() and str(path) not in watched:
+                    self._watcher.addPath(str(path))
+
+    def _normalize_dev_path(self, value: str) -> str:
+        path = Path(str(value)).expanduser().resolve()
+        if path.is_file():
+            path = path.parent
+        return str(path)
+
+    def _merge_dev_extensions(self, extra: list[str]) -> list[str]:
+        merged: list[str] = []
+        for item in [*list(self._settings.get("dev_extensions") or []), *extra]:
+            path = self._normalize_dev_path(str(item))
+            if path not in merged:
+                merged.append(path)
+        return merged
+
+    def _remember_dev_extensions(self) -> None:
+        config = self._load_config()
+        config["dev_extensions"] = list(self._dev_extensions)
+        self._save_config(config)
+
+    def _on_dev_extension_add(self, message: Any) -> None:
+        path = str((message.payload or {}).get("path") or "").strip()
+        if not path:
+            return
+        target = Path(self._normalize_dev_path(path))
+        if not (target / "extension.json").is_file():
+            self.window.notify_warning("开发扩展", f"不是扩展目录：{target}")
+            return
+        if str(target) not in self._dev_extensions:
+            self._dev_extensions.append(str(target))
+            self._remember_dev_extensions()
+            self.supervisor.set_dev_dirs([Path(item) for item in self._dev_extensions])
+            self._watch_extensions()
+
+    def _on_dev_extension_remove(self, message: Any) -> None:
+        path = str((message.payload or {}).get("path") or "").strip()
+        target = str(Path(path).expanduser().resolve()) if path else ""
+        if target in self._dev_extensions:
+            self._dev_extensions.remove(target)
+            self._remember_dev_extensions()
+            self.supervisor.set_dev_dirs([Path(item) for item in self._dev_extensions])
+            self._watch_extensions()
 
     def _on_extensions_dir_changed(self, _path: str) -> None:
         if self._watch_timer is not None:
@@ -356,6 +426,13 @@ class OboxApp:
         if failed:
             names = "、".join(str(item.get("id")) for item in failed)
             self.window.notify_warning("扩展未激活", names)
+        current_ids = {str(item.get("id")) for item in payload.get("extensions", [])}
+        for key in list(self._extensions):
+            if key not in current_ids:
+                self._extensions.pop(key, None)
+                self._extension_dirs.pop(key, None)
+                for view_id in [vid for vid, spec in self._view_specs.items() if spec.get("extension_id") == key]:
+                    self._view_specs.pop(view_id, None)
         for item in payload.get("extensions", []):
             self._extensions[str(item.get("id"))] = dict(item)
             directory = str(item.get("directory") or "")
@@ -692,7 +769,7 @@ class OboxApp:
         """全部地区：Qt 能枚举的 locale + 已注册语言，标签用原生地区名。"""
         if self._language_cache is not None:
             return list(self._language_cache)
-        from PySide6.QtCore import QLocale
+        from obox.qt import QLocale
 
         items: dict[str, str] = {}
         used: dict[str, str] = {}
@@ -705,9 +782,17 @@ class OboxApp:
             code = locale.name().replace("_", "-")
             if not code or code == "C":
                 continue
-            label = self._locale_labels.get(code) or (
-                locale.nativeTerritoryName() or locale.nativeLanguageName() or code
-            )
+            native = ""
+            for attribute in ("nativeTerritoryName", "nativeLanguageName"):
+                getter = getattr(locale, attribute, None)
+                if getter is not None:
+                    try:
+                        native = str(getter() or "")
+                    except TypeError:
+                        native = ""
+                if native:
+                    break
+            label = self._locale_labels.get(code) or native or code
             label = label.replace(",", "·").strip() or code
             if label in used and used[label] != code:
                 label = f"{label}（{code}）"
@@ -1133,7 +1218,7 @@ class OboxApp:
         action = str(payload.get("action") or "")
         extension_id = str(payload.get("id") or "")
         if action == "install":
-            from PySide6.QtWidgets import QFileDialog
+            from obox.qt import QFileDialog
 
             package, _ = QFileDialog.getOpenFileName(
                 self.window, "安装扩展", "", "obox 扩展 (*.oix)"
@@ -1379,8 +1464,8 @@ class OboxApp:
             self._refresh_tray()
 
     def _open_extensions_dir(self) -> None:
-        from PySide6.QtCore import QUrl
-        from PySide6.QtGui import QDesktopServices
+        from obox.qt import QUrl
+        from obox.qt import QDesktopServices
 
         QDesktopServices.openUrl(QUrl.fromLocalFile(str(self.extensions_root)))
 
@@ -1483,6 +1568,11 @@ def run(
     exit_after: float = 0.0,
     theme: str = "",
     language: str = "",
+    dev_extensions: list[str] | None = None,
+    debug: bool = False,
+    debug_port: int = 5678,
+    debug_wait: bool = True,
+    dev_reload: bool = True,
 ) -> int:
     apply_app_user_model_id()
     QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
@@ -1499,7 +1589,18 @@ def run(
     paths = resolve_paths()
     project_root = paths.program_dir
     try:
-        obox_app = OboxApp(project_root, extensions_dir, theme, language, data_dir=paths.data_dir)
+        obox_app = OboxApp(
+            project_root,
+            extensions_dir,
+            theme,
+            language,
+            data_dir=paths.data_dir,
+            dev_extensions=dev_extensions or [],
+            debug=debug,
+            debug_port=debug_port,
+            debug_wait=debug_wait,
+            dev_reload=dev_reload,
+        )
         obox_app.attach_instance(instance)
         obox_app.start()
     except OboxError as exc:

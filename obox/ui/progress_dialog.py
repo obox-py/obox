@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from obox.qt import Qt
 
 from .modal_dialog import ModalPanelDialog
 

@@ -6,7 +6,7 @@ import os
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication  # noqa: E402
+from obox.qt import QApplication  # noqa: E402
 
 app = QApplication.instance() or QApplication([])
 

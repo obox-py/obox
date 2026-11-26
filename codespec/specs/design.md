@@ -191,3 +191,20 @@ obox 已按本文件落地：Python 3.12.7、PySide6 6.12.0。主程序包在 ob
 - 选择：按 tmp/light.png 与 tmp/dark.png 采样重做两套主题：主色 #2f6bee / #5b8def，圆角 2px，控件高 32，按钮四 variant，方形勾选/单选，主题自带 HarmonyOS Sans SC 并在启动时注册为应用字体。
 - 理由：参考图是唯一视觉基准；字体随主题走，切换套件仍用对应字体。
 - 代价：与旧的低饱和大圆角风格不兼容；旧调用需保留 primary 兼容参数。
+### D50 开发目录来源
+
+- 选择：--dev-extension 与 DEV_EXTENSION_ADD/REMOVE 把开发目录交给宿主作为独立来源 dev；只挂载、不复制、不写 disabled，列表 origin=dev；路径写 config.dev_extensions。
+- 理由：开发迭代要即时生效且不能污染安装态；宿主扫描来源扩展即可复用激活链路。
+- 代价：dev 与安装同 id 时仅本次会话覆盖；重启后以配置中的目录再次加载。
+
+### D51 debugpy attach
+
+- 选择：--debug 时宿主命令改为 python -m debugpy --listen 127.0.0.1:5678 --wait-for-client -m obox.extensions.host；仓库提供 .vscode/launch.json 的 attach 与 launch 配置。
+- 理由：宿主独立进程，attach 不影响主 UI；debugpy 只在开发依赖，发布包不带。
+- 代价：等待 attach 时扩展尚未激活，需先连调试器；--no-debug-wait 可跳过。
+
+### D52 开发目录热重载
+
+- 选择：QFileSystemWatcher 监听 dev 目录，去抖 400ms 后重启宿主；--no-dev-reload 关闭。
+- 理由：复用已有的目录变化重启链路，不新增增量加载；保存即生效。
+- 代价：断点调试时保存会重启宿主、打断会话。

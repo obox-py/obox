@@ -16,3 +16,10 @@ wheels/
 tmptmp/
 tmp/
 .gitoken
+# 用户扩展不入主仓（本地保留，不跟踪）
+extensions/demo/
+extensions/gallery/
+extensions/chartdemo/
+extensions/pickerdemo/
+extensions/rdp/
+extensions/webapp/

@@ -177,7 +177,7 @@ obox SHALL 用网格卡片列出所有声明了 app 的已激活扩展：卡片�
 
 ### Requirement: 扩展目录与清单
 
-obox SHALL 扫描三个扩展根：安装目录的 extensions（系统扩展）、数据目录的 extensions（用户安装）、源码 extensions（开发）；同名扩展按「用户安装 > 系统 > 源码」优先并记录覆盖日志；目录需含合法 extension.json，入口为 extension.py 或 extension.pyd，.oix 先解压再扫描。安装 oix 时 SHALL 按文件名中的 -win-x64 / -win-arm64 与当前进程架构比对，不匹配直接拒绝。
+obox SHALL 扫描四个扩展根：安装目录的 extensions（系统扩展）、数据目录的 extensions（用户安装）、源码 extensions（开发）、命令行与配置指定的开发目录（dev）；同名扩展按「用户安装 > 系统 > 源码 > dev」优先并记录覆盖日志；dev 与已安装同 id 时本次会话以 dev 实现运行并在列表标记 origin=dev；目录需含合法 extension.json，入口为 extension.py 或 extension.pyd，.oix 先解压再扫描。安装 oix 时 SHALL 按文件名中的 -win-x64 / -win-arm64 与当前进程架构比对，不匹配直接拒绝。
 
 #### Scenario: 合法源码扩展被识别
 
@@ -193,6 +193,34 @@ obox SHALL 扫描三个扩展根：安装目录的 extensions（系统扩展）�
 
 - **WHEN** extension.json 缺少名称或作者，或图标路径指向 assets 之外
 - **THEN** obox 跳过该目录，并在日志中指明缺失字段与目录路径
+
+### Requirement: 开发扩展加载
+
+obox SHALL 支持 --dev-extension（可重复）与 DEV_EXTENSION_ADD/REMOVE 消息加载开发目录；目录需含合法 extension.json。开发目录 SHALL 只挂到扩展宿主，不复制到安装目录、不写 disabled 配置；路径列表写入配置 dev_extensions，下次启动自动加载；移除后列表与配置都不残留。
+
+#### Scenario: 启动时加载开发目录
+- **WHEN** 执行 obox --dev-extension D:\work\hello
+- **THEN** 扩展列表出现 hello 且 origin 为 dev，安装目录不产生副本
+
+#### Scenario: 运行中移除
+- **WHEN** 发送 DEV_EXTENSION_REMOVE_MSG（payload 含 path）
+- **THEN** 该扩展停用、配置删除、其它扩展不受影响
+
+### Requirement: 断点调试
+
+obox SHALL 支持 --debug 与 --debug-port，扩展宿主以 debugpy 在 127.0.0.1:端口 监听并等待 attach；--no-debug-wait 可跳过等待。debugpy SHALL 属于开发依赖，不进入发布包。仓库 SHALL 提供 .vscode/launch.json，包含 attach 扩展宿主与启动 obox 的配置。
+
+#### Scenario: VS Code 命中断点
+- **WHEN** obox 以 --debug 启动，VS Code attach 到端口并在开发目录 extension.py 设断点
+- **THEN** 断点命中，可单步与查看变量
+
+### Requirement: 开发目录热重载
+
+obox SHALL 监听开发目录内文件变化，变化后自动重启扩展宿主并重新激活；--no-dev-reload 可关闭。
+
+#### Scenario: 保存即生效
+- **WHEN** 修改开发目录里的 extension.py 并保存
+- **THEN** 宿主重启，开发扩展重新激活
 
 ### Requirement: 扩展生命周期与上下文注入
 

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import pytest
-from PySide6.QtWidgets import QWidget
+from obox.qt import QWidget
 
 from obox.ui.builder import Builder
 from obox.ui.parser import parse_fragment

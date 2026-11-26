@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QColor
-from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QLabel
+from obox.qt import Qt
+from obox.qt import QColor
+from obox.qt import QTest
+from obox.qt import QLabel
 
 from obox.ui.builder import Builder
 from obox.ui.parser import parse_fragment

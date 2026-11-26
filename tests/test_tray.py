@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtGui import QIcon
+from obox.qt import QIcon
 
 from obox.ui.tray import TrayIcon
 

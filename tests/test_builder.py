@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import pytest
-from PySide6.QtCore import Qt
-from PySide6.QtTest import QTest
+from obox.qt import Qt
+from obox.qt import QTest
 
 from obox.api.errors import ComponentConflict
 from obox.ui.builder import BuildError, Builder

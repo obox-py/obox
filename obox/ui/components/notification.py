@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import Qt, QTimer, Signal
-from PySide6.QtWidgets import QFrame, QGraphicsOpacityEffect, QLabel, QVBoxLayout, QWidget
+from obox.qt import Qt, QTimer, Signal
+from obox.qt import QFrame, QGraphicsOpacityEffect, QLabel, QVBoxLayout, QWidget
 
 from .base import Component, animate
 

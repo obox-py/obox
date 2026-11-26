@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QHBoxLayout, QPushButton, QSizePolicy, QVBoxLayout, QWidget
+from obox.qt import Qt, Signal
+from obox.qt import QHBoxLayout, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from .base import Component
 

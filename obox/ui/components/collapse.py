@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPolygonF
-from PySide6.QtCore import QPointF
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QVBoxLayout, QWidget
+from obox.qt import Qt, Signal
+from obox.qt import QColor, QFont, QPainter, QPolygonF
+from obox.qt import QPointF
+from obox.qt import QHBoxLayout, QLabel, QVBoxLayout, QWidget
 
 from .. import palette
 from .base import Component

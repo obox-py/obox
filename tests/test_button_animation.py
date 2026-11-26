@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QPointF
-from PySide6.QtGui import QEnterEvent
-from PySide6.QtTest import QTest
+from obox.qt import QPointF
+from obox.qt import QEnterEvent
+from obox.qt import QTest
 
 from obox.ui.builder import Builder
 from obox.ui.parser import parse_fragment

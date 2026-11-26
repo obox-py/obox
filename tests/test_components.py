@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import pytest
-from PySide6.QtCore import QEvent, QPoint, QPointF, Qt
-from PySide6.QtGui import QColor, QMouseEvent
-from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QApplication, QWidget
+from obox.qt import QEvent, QPoint, QPointF, Qt
+from obox.qt import QColor, QMouseEvent
+from obox.qt import QTest
+from obox.qt import QApplication, QWidget
 
 from obox.ui.builder import Builder
 from obox.ui.component_protocol import REQUIRED_TAGS, validate_provider

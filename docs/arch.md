@@ -154,7 +154,11 @@ flowchart TB
 | i18n 注册表 | 按扩展标识与条目 id 存多语言文案，渲染前替换占位符 | obox/i18n.py | obox/api、obox/core |
 | OML 视图 | 读取扩展目录下的 .oml，拒绝越界与缺失 | obox/oml.py | 文件系统 |
 | 消息通道 | 路由消息、维护关联、承载进程间帧 | obox/core、obox/api | QtNetwork |
-| 扩展系统 | 发现、校验、激活扩展，管理宿主进程与注册点 | obox/extensions | obox/api、obox/core |
+| 扩展系统 | 发现、校验、激活扩展，管理宿主进程与注册点；支持 dev 目录与 debugpy 启动 | obox/extensions | obox/api、obox/core |
+| 开发调试 | --dev-extension 目录挂载、dev 来源扫描、热重载、debugpy attach | obox/app.py、obox/extensions/{host,supervisor}.py | debugpy（dev）、QFileSystemWatcher |
+
+扩展宿主启动时可带开发目录与调试包装：supervisor 把 --dev-dir 传给宿主，宿主按 dev 来源激活（不安装）；--debug 时宿主命令改为 debugpy 监听 127.0.0.1:5678，等待 VS Code attach。开发目录变化由 QFileSystemWatcher 触发宿主重启。
+
 
 ## 4. 逻辑架构与技术选型
 

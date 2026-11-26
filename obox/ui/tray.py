@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QObject, Qt, Signal
-from PySide6.QtGui import QIcon
-from PySide6.QtWidgets import QMenu, QSystemTrayIcon
+from obox.qt import QObject, Qt, Signal
+from obox.qt import QIcon
+from obox.qt import QMenu, QSystemTrayIcon
 
 
 class TrayIcon(QObject):

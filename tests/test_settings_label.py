@@ -5,7 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-from PySide6.QtCore import Qt
+from obox.qt import Qt
 
 from obox.api.errors import ComponentNotFound
 from obox.app import OboxApp

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QRect, QSize, Qt
-from PySide6.QtWidgets import QLayout, QLayoutItem, QWidget
+from obox.qt import QRect, QSize, Qt
+from obox.qt import QLayout, QLayoutItem, QWidget
 
 from .base import Component
 

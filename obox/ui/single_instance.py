@@ -5,8 +5,8 @@ from __future__ import annotations
 import getpass
 import hashlib
 
-from PySide6.QtCore import QCoreApplication, QObject, Signal
-from PySide6.QtNetwork import QLocalServer, QLocalSocket
+from obox.qt import QCoreApplication, QObject, Signal
+from obox.qt import QLocalServer, QLocalSocket
 
 
 def instance_name(prefix: str = "obox") -> str:

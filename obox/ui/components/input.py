@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import QEvent, QObject
-from PySide6.QtWidgets import QLineEdit, QTextEdit
+from obox.qt import QEvent, QObject
+from obox.qt import QLineEdit, QTextEdit
 
 from .. import palette
 from .base import Component, border_css

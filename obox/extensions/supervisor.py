@@ -8,7 +8,7 @@ import uuid
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QObject, QProcess, QTimer, Signal
+from obox.qt import QObject, QProcess, QTimer, Signal
 
 from ..core.ipc.server import IpcServer
 
@@ -47,6 +47,10 @@ class Supervisor(QObject):
         extensions_root: Path | None = None,
         parent: QObject | None = None,
         data_dir: Path | None = None,
+        dev_dirs: list[Path] | None = None,
+        debug: bool = False,
+        debug_port: int = 5678,
+        debug_wait: bool = True,
     ) -> None:
         super().__init__(parent)
         self._root = project_root
@@ -60,6 +64,10 @@ class Supervisor(QObject):
         self._process: QProcess | None = None
         self._restarts = 0
         self._stopping = False
+        self._dev_dirs = [Path(path) for path in (dev_dirs or [])]
+        self._debug = bool(debug)
+        self._debug_port = int(debug_port)
+        self._debug_wait = bool(debug_wait)
 
     @property
     def pipe_name(self) -> str:
@@ -78,6 +86,11 @@ class Supervisor(QObject):
         self.stop()
         self._restarts = 0
         self.start()
+
+    def set_dev_dirs(self, directories: list[Path]) -> None:
+        """更新开发目录并重启宿主，让新增/移除立即生效。"""
+        self._dev_dirs = [Path(path) for path in directories]
+        self.restart()
 
     def stop(self) -> None:
         self._stopping = True
@@ -109,23 +122,30 @@ class Supervisor(QObject):
                 program = str(candidate)
         process.setProgram(program)
         host_prefix = ["--extension-host"] if _IS_FROZEN else ["-m", "obox.extensions.host"]
-        process.setArguments(
-            [
-                *host_prefix,
-                "--pipe",
-                self._pipe_name,
-                "--token",
-                self._token,
-                "--extensions-dir",
-                str(self._extensions_dir),
-                "--system-dir",
-                str(self._root / "extensions"),
-                "--install-dir",
-                str(self._data_dir / "extensions"),
-                "--storage-dir",
-                str(self._storage_dir),
-            ]
-        )
+        host_args = [
+            *host_prefix,
+            "--pipe",
+            self._pipe_name,
+            "--token",
+            self._token,
+            "--extensions-dir",
+            str(self._extensions_dir),
+            "--system-dir",
+            str(self._root / "extensions"),
+            "--install-dir",
+            str(self._data_dir / "extensions"),
+            "--storage-dir",
+            str(self._storage_dir),
+        ]
+        for directory in self._dev_dirs:
+            host_args.extend(["--dev-dir", str(directory)])
+        if self._debug and not _IS_FROZEN:
+            prefix = ["-Xfrozen_modules=off", "-m", "debugpy", "--listen", "127.0.0.1:" + str(self._debug_port)]
+            if self._debug_wait:
+                prefix.append("--wait-for-client")
+            process.setArguments([*prefix, *host_args])
+        else:
+            process.setArguments(host_args)
         _debug(f"spawn frozen={_IS_FROZEN} cmd={program} args={process.arguments()}")
         process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)
         process.errorOccurred.connect(lambda error: _debug(f"process error {error}"))

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Any
 
-from PySide6.QtCore import QPointF, Qt
-from PySide6.QtGui import QPainter, QPen
-from PySide6.QtWidgets import QComboBox
+from obox.qt import QPointF, Qt
+from obox.qt import QPainter, QPen
+from obox.qt import QComboBox
 
 from .. import palette
 from .base import Component, border_css, color

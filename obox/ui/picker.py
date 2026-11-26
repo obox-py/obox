@@ -6,9 +6,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QPointF, QRectF, QSize, Qt
-from PySide6.QtGui import QAction, QColor, QIcon, QPainter, QPixmap
-from PySide6.QtWidgets import (
+from obox.qt import QPointF, QRectF, QSize, Qt
+from obox.qt import QAction, QColor, QIcon, QPainter, QPixmap
+from obox.qt import (
     QCheckBox,
     QComboBox,
     QDialog,
@@ -306,7 +306,7 @@ class PickerDialog(QDialog):
         self._nav_item("本地磁盘 (C:)", "C:/")
 
     def _show_history(self) -> None:
-        from PySide6.QtWidgets import QMenu
+        from obox.qt import QMenu
 
         menu = QMenu(self)
         menu.setObjectName("picker-history")

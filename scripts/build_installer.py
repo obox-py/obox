@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
 import subprocess
 import sys
@@ -59,11 +60,13 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="构建 obox NSIS 安装包")
     parser.add_argument("--skip-exe", action="store_true")
     parser.add_argument("--skip-theme", action="store_true")
+    parser.add_argument("--qt", choices=["pyside6", "pyqt5"], default="pyside6", help="选择 Qt 绑定")
     args = parser.parse_args(argv)
 
+    os.environ["OBOX_QT"] = args.qt
     exe = BUILD / "obox.dist" / "obox.exe"
     if not exe.exists() and not args.skip_exe:
-        code = run_step("编译 exe", [sys.executable, "scripts/build_exe.py"])
+        code = run_step("编译 exe", [sys.executable, "scripts/build_exe.py", "--qt", args.qt])
         if code != 0:
             return code
     if not exe.exists():
@@ -114,7 +117,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     DIST.mkdir(parents=True, exist_ok=True)
-    output = DIST / f"obox-{__version__}-setup.exe"
+    output = DIST / f"obox-{__version__}-{args.qt}-setup.exe"
     if output.exists():
         output.unlink()
     script = BUILD / "obox.nsi"
