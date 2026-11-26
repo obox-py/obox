@@ -84,3 +84,43 @@ def activate(context):
 
 - App 窗口的数据通道与普通视图一致，view_id 用 `app.<window_id>`
 - 配置值的键是清单里的属性名；未设置的键收到 default
+
+## 文件与目录选择（picker）
+
+```python
+from obox.api.picker import picker_open_message
+
+request = context.request(
+    picker_open_message(
+        context.extension_id,
+        mode="file",              # file 或 dir
+        extensions=["txt", "md"], # 空列表 = 不过滤；目录模式忽略
+        multi=False,
+        title="选择文件",
+        start_path="",            # 空 = 用户主目录（远端为登录目录）
+        window_id="",             # App 窗口传入 window_id，只阻塞该窗口
+        ssh=None,                 # 或 {"host","port","user","password","key_path","passphrase"}
+    ),
+    timeout=3600,                 # 选择器可能停留很久，不要用默认 5 秒
+)
+payload = request.result()        # {"paths": [...], "cancelled": bool, "error": str}
+```
+
+| 参数 | 说明 |
+|---|---|
+| mode | `file` 只选文件、`dir` 只选目录（目录模式下列表只显示目录） |
+| extensions | 后缀列表，大小写不敏感、可带点；空列表表示不过滤 |
+| multi | 多选；返回全部选中项 |
+| window_id | 为空时阻塞主窗口；App 窗口传入自己的 window_id，只阻塞该窗口 |
+| ssh | 传入即浏览远端；主机指纹自动记录，不弹确认；密码/私钥只用于本次请求 |
+
+结果形态：本地为绝对路径字符串；远端为 `{"path", "host", "user"}`。
+
+行为约定：
+
+- 列表首行是「..」返回上一级，根目录（本地盘符根、远端 `/`）不显示
+- 路径栏可手输，回车进入；输入文件时进入父目录并选中
+- 隐藏文件默认显示（点号开头与 Windows 隐藏属性），可用「显示隐藏文件」收起；后缀过滤与搜索对隐藏文件同样生效
+- 远端左侧只显示该服务器的入口（主机、主目录、根目录、常用目录），不出现本地目录
+- 远端支持上传/下载（对话框内按钮），不支持新建文件夹；主机键自动写入 `~/.ssh/known_hosts`
+- 路径栏旁的下拉可快速回到最近访问过的目录

@@ -32,6 +32,7 @@ obox 面向需要「桌面外壳 + 第三方功能扩展」的场景：主程序
 - **仿 VSCode 的扩展体系**：extension.json 声明清单与注册点，extension.py 提供 activate 与 deactivate，context 注入扩展所需能力
 - **可等待的请求应答**：请求支持带超时的阻塞等待、回调与 await 三种取结果方式
 - **可替换的主题套件**：light 与 dark 各自是独立的组件实现，编译为 pyd 放在 `.theme/`；启动按配置加载，缺省 light，运行中可切换
+- **文件与目录选择**：扩展可请求本地或 SSH 远端的文件/目录选择，Win11 风格对话框、按发起窗口模态、结果异步返回
 - **自绘标题栏**：无边框窗口配自绘标题栏，支持拖动、双击最大化、边缘缩放与右键系统菜单，Windows 上带系统阴影
 
 ## 技术栈
@@ -147,7 +148,8 @@ obox/
 4. 把 svg 图标与 QSS 放进同目录的 assets
 5. 需要界面时，声明视图并给出 HTML 组件片段；需要事件的组件写上 on_click、on_input 这类属性，没写的交互不会产生消息
 6. 图标用 svg：侧栏的扩展图标会按主题色重染成单色、选中变色，因此画轮廓比堆颜色更好看；obox 自身图标保持原色，不重染
-6. 需要横向或流式排布时用 Flex 容器：direction、wrap、justify、align、gap，子项可写 grow 占满剩余空间
+7. 需要横向或流式排布时用 Flex 容器：direction、wrap、justify、align、gap，子项可写 grow 占满剩余空间
+8. 需要选择文件或目录时，用 `obox.api.picker` 发 PICKER_OPEN，参考 `extensions/pickerdemo` 与 `docs/api.md`
 
 ## Agent 技能
 

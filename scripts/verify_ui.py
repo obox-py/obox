@@ -448,6 +448,33 @@ def main(argv: list[str] | None = None) -> int:
             check("matplotlib 示例渲染折线", chart_ok, "")
             driver.screenshot(obox.window, f"{obox.theme_name}_26_matplotlib")
 
+        from obox.api.picker import picker_open_message
+
+        picker_req = obox.bus.request(
+            picker_open_message("demo.obox", mode="dir", start_path=str(Path.home()), title="选择文件夹")
+        )
+        picker_ready = driver.wait_until(lambda: bool(obox._pickers), timeout=5)
+        check("选择器已打开", picker_ready, "")
+        if picker_ready:
+            from PySide6.QtCore import Qt as _Qt
+
+            dialog = obox._pickers[0]
+            check(
+                "选择器按窗口模态",
+                dialog.windowModality() == _Qt.WindowModality.WindowModal,
+                "",
+            )
+            import time
+
+            deadline = time.monotonic() + 8
+            while time.monotonic() < deadline and dialog.tree.topLevelItemCount() == 0:
+                QApplication.processEvents()
+                time.sleep(0.02)
+            driver.screenshot(dialog, f"{obox.theme_name}_27_picker")
+            dialog._accept()
+            result = picker_req.result(5)
+            check("选择器返回路径", bool(result.get("paths")), str(result))
+
         driver.screenshot(obox.window, f"{obox.theme_name}_04_final")
     finally:
         obox.supervisor.stop()

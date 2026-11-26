@@ -65,3 +65,30 @@ chart 由 obox 提供（不在主题里），用 matplotlib 的 QtAgg 画布渲�
 
 - 标题可点，展开/收起正文；子组件写在面板里，装配进入正文布局
 - 状态：open（bool）、title、visible；事件：toggle（回调收到 {open}）
+
+## 选择文件与目录（picker）
+
+```python
+from obox.api.picker import picker_open_message
+
+request = context.request(
+    picker_open_message(
+        context.extension_id,
+        mode="file",              # file 或 dir
+        extensions=["txt", "md"],  # 只对文件生效
+        multi=True,
+        title="选择文件",
+        start_path="",            # 空则从用户主目录开始
+        window_id="",             # App 窗口传入 window_id，只阻塞该窗口
+        ssh=None,                 # 或 {"host","port","user","password","key_path","passphrase"}
+    ),
+    timeout=3600,                 # 选择器可能停留很久，不要用默认 5 秒
+)
+payload = request.result(60)  # 远端指纹/输入可能很久，发起时给足 timeout
+# {"paths": [...], "cancelled": false, "error": "..."}；远端路径为 {"path","host","user"}
+```
+
+- 对话框对发起窗口模态：主窗口发起阻塞主窗口，App 窗口发起只阻塞该窗口
+- 远端浏览使用 paramiko，主机指纹自动记录，不弹确认；凭据只存在于本次请求
+- 列表首行「..」返回上级；隐藏文件默认显示；远端左侧只列服务器入口
+- 选择器可能停留很久，发起请求要显式给长 timeout（示例用 3600 秒）

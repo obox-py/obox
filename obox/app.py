@@ -33,6 +33,11 @@ from .api.extensions import (
 )
 from .api.i18n import I18N_REGISTER_MSG, I18nRegisterMessage
 from .api.lifecycle import VIEW_MOUNTED_MSG, view_message
+from .api.picker import (
+    PICKER_OPEN_MSG,
+    picker_result_message,
+    validate_open,
+)
 from .api.settings import (
     EXTENSION_CONFIG_MSG,
     SETTINGS_SET_MSG,
@@ -117,6 +122,7 @@ class OboxApp:
         self._app_specs: dict[str, dict[str, Any]] = {}
         self._app_counter = 0
         self._view_handles: dict[str, tuple[str, ViewHandle]] = {}
+        self._pickers: list[Any] = []
         self._app_handles: dict[str, tuple[str, ViewHandle]] = {}
         self._anchors: dict[str, tuple[str, AnchorController]] = {}
         self._watcher = None
@@ -149,6 +155,7 @@ class OboxApp:
         self.bus.on(COMPONENT_EVENT_MSG, self._on_component_event)
         self.bus.on(APP_LAUNCH_MSG, self._on_app_launch)
         self.bus.on(VIEW_SCROLL_MSG, self._on_view_scroll)
+        self.bus.on(PICKER_OPEN_MSG, self._on_picker_open)
         self.bus.on(EXTENSION_CONFIG_MSG, lambda message: None)
         self.bus.on(EXTENSIONS_MANAGE_MSG, self._on_extensions_manage)
         self.bus.on(EXTENSIONS_CHANGED_MSG, self._on_extensions_changed)
@@ -887,6 +894,71 @@ class OboxApp:
         self._push_extension_configs()
         if message.correlation_id:
             self.bus.reply(message, {"ok": True})
+
+    def _on_picker_open(self, message: Any) -> None:
+        from .ui.picker import PickerDialog
+
+        params, error = validate_open(dict(message.payload or {}))
+        if params is None:
+            payload = {"paths": [], "error": error, "cancelled": True}
+            if message.correlation_id:
+                data = message.to_dict()
+                data.update({"src": message.dst or "obox", "dst": message.src, "reply": True, "payload": {**message.payload, **payload}})
+                self.bus.receive(data)
+                try:
+                    transport = getattr(self.bus, "_transport", None)
+                    if transport is not None:
+                        transport.send(data)
+                except Exception:
+                    pass
+            else:
+                self.bus.send(picker_result_message(message.src, [], error, True))
+            return
+        window = self._app_windows.get(params["window_id"]) if params["window_id"] else None
+        dialog = PickerDialog(params, window or self.window)
+        self._pickers.append(dialog)
+
+        def _finished(_result: int) -> None:
+            paths = dialog.selected_paths()
+            failed = dialog.error
+            payload = {"paths": paths, "cancelled": not paths and not failed}
+            if failed:
+                payload["error"] = failed
+            try:
+                if message.correlation_id:
+                    data = message.to_dict()
+                    data.update(
+                        {
+                            "src": message.dst or "obox",
+                            "dst": message.src,
+                            "reply": True,
+                            "payload": {**message.payload, **payload},
+                        }
+                    )
+                    self.bus.receive(data)
+                    try:
+                        transport = getattr(self.bus, "_transport", None)
+                        if transport is not None:
+                            transport.send(data)
+                    except Exception:
+                        pass
+                try:
+                    transport = getattr(self.bus, "_transport", None)
+                    if transport is not None:
+                        transport.send(data)
+                except Exception:
+                    pass
+                else:
+                    self.bus.send(
+                        picker_result_message(message.src, paths, failed, payload["cancelled"])
+                    )
+            finally:
+                if dialog in self._pickers:
+                    self._pickers.remove(dialog)
+                dialog.deleteLater()
+
+        dialog.finished.connect(_finished)
+        dialog.show()
 
     def _on_view_data(self, message: Any) -> None:
         payload = message.payload or {}
