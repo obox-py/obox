@@ -57,6 +57,34 @@ def filter_extensions(items: list[dict], query: str) -> list[dict]:
     return [_view_item(item) for item in items if hit(item)]
 
 
+def _confirm_remove(context, extension_id: str) -> None:
+    """用新的 window.showMessageBox 做卸载确认。"""
+    request = context.request(
+        context.window.showMessageBox(
+            context,
+            {
+                "type": "warning",
+                "message": f"卸载扩展 {extension_id}？",
+                "detail": "卸载后扩展目录会从数据目录移除。",
+                "buttons": ["卸载", "取消"],
+                "defaultId": 1,
+                "cancelId": 1,
+            },
+        ),
+        timeout=120,
+    )
+
+    def _done(req) -> None:
+        try:
+            result = req.result(0)
+        except Exception:
+            return
+        if int(result.get("response", 1)) == 0:
+            context.send(extensions_manage_message(context.extension_id, "remove", extension_id))
+
+    request.add_done_callback(_done)
+
+
 def activate(context) -> None:
     state = {"items": [], "query": ""}
 
@@ -89,7 +117,7 @@ def activate(context) -> None:
             return
         if component_id.startswith(_REMOVE_PREFIX):
             extension_id = component_id[len(_REMOVE_PREFIX):]
-            context.send(extensions_manage_message(context.extension_id, "remove", extension_id))
+            _confirm_remove(context, extension_id)
             return
         if component_id.startswith(_TOGGLE_PREFIX):
             extension_id = component_id[len(_TOGGLE_PREFIX):]

@@ -168,6 +168,11 @@ class OboxApp:
         self.bus.on(APP_LAUNCH_MSG, self._on_app_launch)
         self.bus.on(VIEW_SCROLL_MSG, self._on_view_scroll)
         self.bus.on(PICKER_OPEN_MSG, self._on_picker_open)
+        from .ui.window_api import WindowApiService
+
+        self.window_api = WindowApiService(self)
+        for _message_id in WindowApiService.MESSAGE_IDS:
+            self.bus.on(_message_id, self._on_window_api)
         self.bus.on(DEV_EXTENSION_ADD_MSG, self._on_dev_extension_add)
         self.bus.on(DEV_EXTENSION_REMOVE_MSG, self._on_dev_extension_remove)
         self.bus.on(EXTENSION_CONFIG_MSG, lambda message: None)
@@ -188,6 +193,7 @@ class OboxApp:
             debug=self._debug,
             debug_port=self._debug_port,
             debug_wait=self._debug_wait,
+            settings={"network": self._network_settings()},
         )
         self.supervisor.extensions_ready.connect(self._on_extensions_ready)
         self.supervisor.state_changed.connect(self._on_host_state)
@@ -319,6 +325,8 @@ class OboxApp:
             getattr(provider, "danger", "#d93026"),
         )
         self._apply_tray_styles()
+        if hasattr(self, "window_api"):
+            self.window_api.broadcast_theme()
 
     def _register_fonts(self, provider: Any) -> None:
         """套件自带的字体文件在运行时注册；family 名由套件 QSS 引用。"""
@@ -363,6 +371,16 @@ class OboxApp:
         if path.is_file():
             path = path.parent
         return str(path)
+
+    def _network_settings(self) -> dict[str, Any]:
+        raw = str(self._settings.get("obox.network.no_proxy") or "")
+        entries = [line.strip() for line in raw.replace(",", "\n").splitlines() if line.strip()]
+        return {
+            "enabled": bool(self._settings.get("obox.network.enabled", False)),
+            "proxyUrl": str(self._settings.get("obox.network.proxy") or ""),
+            "sslStrict": bool(self._settings.get("obox.network.ssl_strict", True)),
+            "noProxy": entries,
+        }
 
     def _merge_dev_extensions(self, extra: list[str]) -> list[str]:
         merged: list[str] = []
@@ -852,6 +870,42 @@ class OboxApp:
                 ],
             },
             {
+                "id": "network",
+                "title": self._t("settings.group.network"),
+                "items": [
+                    {
+                        "key": "obox.network.enabled",
+                        "title": self._t("settings.item.network.enabled"),
+                        "type": "bool",
+                        "value": bool(self._settings.get("obox.network.enabled", False)),
+                        "checked": "true" if self._settings.get("obox.network.enabled", False) else "false",
+                        "description": self._t("settings.item.network.enabled.desc"),
+                    },
+                    {
+                        "key": "obox.network.proxy",
+                        "title": self._t("settings.item.network.proxy"),
+                        "type": "string",
+                        "value": str(self._settings.get("obox.network.proxy", "")),
+                        "description": self._t("settings.item.network.proxy.desc"),
+                    },
+                    {
+                        "key": "obox.network.ssl_strict",
+                        "title": self._t("settings.item.network.sslstrict"),
+                        "type": "bool",
+                        "value": bool(self._settings.get("obox.network.ssl_strict", True)),
+                        "checked": "true" if self._settings.get("obox.network.ssl_strict", True) else "false",
+                        "description": self._t("settings.item.network.sslstrict.desc"),
+                    },
+                    {
+                        "key": "obox.network.no_proxy",
+                        "title": self._t("settings.item.network.noproxy"),
+                        "type": "string",
+                        "value": str(self._settings.get("obox.network.no_proxy", "")),
+                        "description": self._t("settings.item.network.noproxy.desc"),
+                    },
+                ],
+            },
+            {
                 "id": "language",
                 "title": self._t("settings.group.language"),
                 "items": [
@@ -977,8 +1031,21 @@ class OboxApp:
             self._save_settings()
         self._push_settings()
         self._push_extension_configs()
+        if key.startswith("obox.network."):
+            self.supervisor.set_settings({"network": self._network_settings()})
         if message.correlation_id:
             self.bus.reply(message, {"ok": True})
+
+    def _on_window_api(self, message: Any) -> None:
+        try:
+            payload = self.window_api.handle(message)
+        except Exception as exc:
+            payload = {"error": "E_WINDOW_API", "message": str(exc)}
+        if payload is not None and message.correlation_id:
+            try:
+                self.bus.reply(message, payload)
+            except Exception:
+                pass
 
     def _on_picker_open(self, message: Any) -> None:
         from .ui.picker import PickerDialog

@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any
 
 from .message import OB_BOX, Message
+
+if TYPE_CHECKING:
+    from ..extensions.context import OboxContext
 
 HOST_ID = "host.obox"
 
@@ -17,6 +21,10 @@ EXTENSIONS_MANAGE_MSG = "EXTENSIONS_MANAGE_MSG"
 EXTENSIONS_RESULT_MSG = "EXTENSIONS_RESULT_MSG"
 DEV_EXTENSION_ADD_MSG = "DEV_EXTENSION_ADD_MSG"
 DEV_EXTENSION_REMOVE_MSG = "DEV_EXTENSION_REMOVE_MSG"
+
+EXTENSIONS_ALL_MSG = "EXTENSIONS_ALL_MSG"
+EXTENSIONS_GET_MSG = "EXTENSIONS_GET_MSG"
+EXTENSIONS_ON_CHANGE_MSG = "EXTENSIONS_ON_CHANGE_MSG"
 
 
 def install_extension_message(package: str) -> Message:
@@ -91,3 +99,58 @@ def dev_extension_add_message(path: str) -> Message:
 
 def dev_extension_remove_message(path: str) -> Message:
     return Message(src=OB_BOX, dst=OB_BOX, msg_id=DEV_EXTENSION_REMOVE_MSG, payload={"path": str(path)})
+
+def _api_message(
+    ctx: OboxContext, msg_id: str, payload: dict[str, Any] | None = None
+) -> Message:
+    return Message(src=ctx.extension_id, dst=HOST_ID, msg_id=msg_id, payload=dict(payload or {}))
+
+
+def all(ctx: OboxContext) -> Message:
+    """属性请求：列出全部扩展（id/name/version/directory/storagePath/status/origin）。"""
+    return _api_message(ctx, EXTENSIONS_ALL_MSG)
+
+
+def getExtension(ctx: OboxContext, id: str) -> Message:
+    extension_id = str(id or "").strip()
+    if not extension_id:
+        raise ValueError("扩展 id 不能为空")
+    return _api_message(ctx, EXTENSIONS_GET_MSG, {"id": extension_id})
+
+
+def onDidChange(
+    ctx: OboxContext, listener: Callable[[dict[str, Any]], None] | None = None
+) -> Message:
+    """订阅扩展增删与状态变化；listener 由扩展运行时在本进程注册。"""
+    if listener is not None and not callable(listener):
+        raise TypeError("listener 必须是可调用对象")
+    return _api_message(ctx, EXTENSIONS_ON_CHANGE_MSG, {"subscribe": True})
+
+
+__all__ = [
+    "DEV_EXTENSION_ADD_MSG",
+    "DEV_EXTENSION_REMOVE_MSG",
+    "EXTENSIONS_ALL_MSG",
+    "EXTENSIONS_CHANGED_MSG",
+    "EXTENSIONS_GET_MSG",
+    "EXTENSIONS_LIST_MSG",
+    "EXTENSIONS_MANAGE_MSG",
+    "EXTENSIONS_ON_CHANGE_MSG",
+    "EXTENSIONS_RESULT_MSG",
+    "EXT_ENABLE_MSG",
+    "EXT_INSTALL_MSG",
+    "EXT_REMOVE_MSG",
+    "HOST_ID",
+    "all",
+    "dev_extension_add_message",
+    "dev_extension_remove_message",
+    "enable_extension_message",
+    "extensions_changed_message",
+    "extensions_list_message",
+    "extensions_manage_message",
+    "extensions_result_message",
+    "getExtension",
+    "install_extension_message",
+    "onDidChange",
+    "remove_extension_message",
+]

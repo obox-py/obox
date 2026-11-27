@@ -208,3 +208,14 @@ obox 已按本文件落地：Python 3.12.7、PySide6 6.12.0。主程序包在 ob
 - 选择：QFileSystemWatcher 监听 dev 目录，去抖 400ms 后重启宿主；--no-dev-reload 关闭。
 - 理由：复用已有的目录变化重启链路，不新增增量加载；保存即生效。
 - 代价：断点调试时保存会重启宿主、打断会话。
+### D56 扩展 API 命名空间
+
+- 选择：按 VS Code 组织 window/workspace/commands/env/extensions/storage/network/message/log，函数与参数 camelCase；所有函数首参是只读 OboxContext。
+- 理由：降低迁移成本；ctx 标识扩展与窗口，宿主可校验来源；UI 类在主进程，网络/存储/扩展信息在宿主。
+- 代价：API 面变大，需按命名空间维护文档与测试。
+
+### D57 网络代理与多协议
+
+- 选择：设置页统一配置代理（enabled/proxyUrl/sslStrict/noProxy），network 默认读取；调用只保留 noProxy。HTTP/HTTPS 用 QtNetwork，TCP/SSH/SFTP 走 SOCKS5/HTTP CONNECT，UDP/QUIC 走 SOCKS5 UDP associate，ICMP 调系统 ping 且不支持代理，QUIC 用 aioquic。
+- 理由：代理策略集中，扩展不接触网络栈；协议能力差异显式报错。
+- 代价：UDP/QUIC 依赖代理服务端能力；ICMP 在代理下不可用。

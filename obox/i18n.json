@@ -158,5 +158,95 @@
       "lang": "en-US",
       "value": "ask, tray, quit"
     }
+  ],
+  "settings.group.network": [
+    {
+      "lang": "zh-CN",
+      "value": "网络"
+    },
+    {
+      "lang": "en-US",
+      "value": "Network"
+    }
+  ],
+  "settings.item.network.enabled": [
+    {
+      "lang": "zh-CN",
+      "value": "启用代理"
+    },
+    {
+      "lang": "en-US",
+      "value": "Use proxy"
+    }
+  ],
+  "settings.item.network.enabled.desc": [
+    {
+      "lang": "zh-CN",
+      "value": "开启后所有 network API 默认走代理"
+    },
+    {
+      "lang": "en-US",
+      "value": "All network APIs use the proxy by default"
+    }
+  ],
+  "settings.item.network.proxy": [
+    {
+      "lang": "zh-CN",
+      "value": "代理地址"
+    },
+    {
+      "lang": "en-US",
+      "value": "Proxy URL"
+    }
+  ],
+  "settings.item.network.proxy.desc": [
+    {
+      "lang": "zh-CN",
+      "value": "http:// 或 socks5://，含认证时写进 URL"
+    },
+    {
+      "lang": "en-US",
+      "value": "http:// or socks5://; include credentials in the URL"
+    }
+  ],
+  "settings.item.network.sslstrict": [
+    {
+      "lang": "zh-CN",
+      "value": "严格校验证书"
+    },
+    {
+      "lang": "en-US",
+      "value": "Strict TLS"
+    }
+  ],
+  "settings.item.network.sslstrict.desc": [
+    {
+      "lang": "zh-CN",
+      "value": "关闭后接受自签证书（https/quic）"
+    },
+    {
+      "lang": "en-US",
+      "value": "Accept self-signed certificates when off"
+    }
+  ],
+  "settings.item.network.noproxy": [
+    {
+      "lang": "zh-CN",
+      "value": "忽略地址"
+    },
+    {
+      "lang": "en-US",
+      "value": "No proxy"
+    }
+  ],
+  "settings.item.network.noproxy.desc": [
+    {
+      "lang": "zh-CN",
+      "value": "每行一个域名或 IP，匹配时直连"
+    },
+    {
+      "lang": "en-US",
+      "value": "One host or IP per line; matched hosts bypass the proxy"
+    }
   ]
 }

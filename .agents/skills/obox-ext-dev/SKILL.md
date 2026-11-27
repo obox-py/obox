@@ -42,6 +42,7 @@ uv run obox --dev-extension D:\work\hello --debug
 - `references/context-api.md`：context 方法与消息
 - `references/oml.md`：标签、指令、绑定、事件
 - `references/i18n.md`：i18n.json 格式与 id 规则
+- `references/namespaces.md`：window/workspace/network 等命名空间速查
 - `references/debugging.md`：开发目录加载、debugpy attach、launch.json 与排障
 - `templates/launch.json`：扩展仓库可直接复制的 attach 配置
 - `references/packaging.md`：打包与安装

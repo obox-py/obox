@@ -222,6 +222,26 @@ obox SHALL 监听开发目录内文件变化，变化后自动重启扩展宿主
 - **WHEN** 修改开发目录里的 extension.py 并保存
 - **THEN** 宿主重启，开发扩展重新激活
 
+### Requirement: 扩展命名空间 API
+
+obox SHALL 向扩展提供按 VS Code 风格组织的命名空间 API：window、workspace、commands、env、extensions、storage、network、message、log；所有函数以只读 OboxContext 为第一个参数，函数与参数使用 camelCase。window SHALL 提供消息框、quickPick、inputBox、打开/保存对话框、模态 showMessageBox、createWindow/closeWindow/setWindowTitle/getActiveWindow/listWindows/focusWindow、状态栏、进度、输出通道与主题；network SHALL 提供 HTTP、TCP、UDP、QUIC、SSH、SFTP、ICMP 与统一代理；storage SHALL 提供 globalState/workspaceState；扩展不得直接依赖 Qt。
+
+#### Scenario: 模态框只阻塞发起窗口
+- **WHEN** 扩展在子窗口调用 showMessageBox
+- **THEN** 子窗口不可交互，主窗口与其它子窗口仍可操作
+
+#### Scenario: 新窗口
+- **WHEN** 扩展调用 createWindow 传入 title 与 oml
+- **THEN** 新窗口打开并渲染该 OML，返回 windowId
+
+#### Scenario: 网络代理
+- **WHEN** 设置页启用代理且扩展调用 network.request 未传 noProxy
+- **THEN** 请求经代理发出；noProxy=True 时直连
+
+#### Scenario: 上下文不可变
+- **WHEN** 扩展给 ctx.extensionId 赋值
+- **THEN** 抛出只读异常，订阅只能通过 ctx.subscriptions.add 添加
+
 ### Requirement: 扩展生命周期与上下文注入
 
 扩展宿主 SHALL 在激活时调用 extension.py 的 activate 并注入 context，在停用时调用 deactivate；context 提供扩展标识、资产目录、存储目录、消息收发与注册点能力。

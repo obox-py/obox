@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import sys
+import json
 import uuid
 from pathlib import Path
 from typing import Any
@@ -51,6 +52,7 @@ class Supervisor(QObject):
         debug: bool = False,
         debug_port: int = 5678,
         debug_wait: bool = True,
+        settings: dict[str, Any] | None = None,
     ) -> None:
         super().__init__(parent)
         self._root = project_root
@@ -68,6 +70,7 @@ class Supervisor(QObject):
         self._debug = bool(debug)
         self._debug_port = int(debug_port)
         self._debug_wait = bool(debug_wait)
+        self._settings = dict(settings or {})
 
     @property
     def pipe_name(self) -> str:
@@ -86,6 +89,10 @@ class Supervisor(QObject):
         self.stop()
         self._restarts = 0
         self.start()
+
+    def set_settings(self, settings: dict[str, Any]) -> None:
+        self._settings = dict(settings)
+        self.restart()
 
     def set_dev_dirs(self, directories: list[Path]) -> None:
         """更新开发目录并重启宿主，让新增/移除立即生效。"""
@@ -139,6 +146,7 @@ class Supervisor(QObject):
         ]
         for directory in self._dev_dirs:
             host_args.extend(["--dev-dir", str(directory)])
+        host_args.extend(["--settings", json.dumps(self._settings, ensure_ascii=False)])
         if self._debug:
             host_args.extend(["--debug", "--debug-port", str(self._debug_port)])
             if not self._debug_wait:

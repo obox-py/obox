@@ -225,7 +225,18 @@ class MainWindow(QWidget):
         middle_layout.addWidget(self._stack, 1)
         layout.addWidget(middle, 1)
         layout.addWidget(self._bottom)
+        self._body_layout = layout
         return body
+
+    def attach_status_bar(self, widget: QWidget) -> None:
+        """状态栏挂在 body 最底部，位于底部面板之下。"""
+        self._body_layout.addWidget(widget)
+
+    def attach_output_panel(self, widget: QWidget) -> None:
+        """输出面板挂在底部面板之上，默认隐藏。"""
+        index = max(0, self._body_layout.count() - 1)
+        self._body_layout.insertWidget(index, widget)
+        widget.hide()
 
     def add_view(
         self,

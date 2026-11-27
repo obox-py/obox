@@ -23,6 +23,7 @@ from .context import ExtensionContext
 from .contributions import CommandRegistry, ViewRegistry
 from ..api.errors import ManifestError
 from ..api.message import OB_BOX
+from ..api import network as network_api
 from ..i18n import I18nError, parse_document
 from ..api.extensions import (
     EXT_ENABLE_MSG,
@@ -42,6 +43,8 @@ from .loader import (
     scan_all,
 )
 from .manifest import Manifest, load_manifest
+from .network import NetworkService
+from .devapi import DevApiService
 
 LOGGER = logging.getLogger(__name__)
 
@@ -78,6 +81,7 @@ class ExtensionHost(QObject):
         storage_root: Path,
         system_dir: Path | None = None,
         dev_dirs: list[Path] | None = None,
+        settings: dict[str, Any] | None = None,
     ) -> None:
         super().__init__()
         self._extensions_dir = extensions_dir
@@ -102,6 +106,28 @@ class ExtensionHost(QObject):
         self._bus.on(EXT_INSTALL_MSG, self._on_install)
         self._bus.on(EXT_REMOVE_MSG, self._on_remove)
         self._bus.on(EXT_ENABLE_MSG, self._on_enable)
+        self._network = NetworkService((settings or {}).get("network"))
+        self._devapi = DevApiService(
+            self._storage_root,
+            commands=self._commands,
+            manifests=lambda: self._manifests,
+            folders=[self._extensions_dir],
+        )
+        for _message_id in DevApiService.MESSAGE_IDS:
+            self._bus.on(_message_id, self._on_devapi_message)
+        self._bus.on("COMMANDS_REGISTER_MSG", self._on_command_register)
+        for _message_id in (
+            network_api.NETWORK_REQUEST_MSG,
+            network_api.NETWORK_TCP_CONNECT_MSG,
+            network_api.NETWORK_TCP_SEND_MSG,
+            network_api.NETWORK_TCP_CLOSE_MSG,
+            network_api.NETWORK_UDP_SEND_MSG,
+            network_api.NETWORK_QUIC_REQUEST_MSG,
+            network_api.NETWORK_SSH_CONNECT_MSG,
+            network_api.NETWORK_SFTP_LIST_MSG,
+            network_api.NETWORK_PING_MSG,
+        ):
+            self._bus.on(_message_id, self._on_network_message)
 
     def _read_disabled(self) -> set[str]:
         try:
@@ -430,7 +456,37 @@ class ExtensionHost(QObject):
         elif kind == "shutdown":
             self.shutdown()
 
+    def _on_command_register(self, message: Any) -> None:
+        if message.correlation_id:
+            try:
+                self._bus.reply(message, {"ok": True})
+            except Exception:
+                pass
+
+    def _on_devapi_message(self, message: Any) -> None:
+        payload = self._devapi.handle(message)
+        if message.correlation_id:
+            try:
+                self._bus.reply(message, payload)
+            except Exception:
+                pass
+
+    def _on_network_message(self, message: Any) -> None:
+        try:
+            payload = self._network.handle(message)
+        except Exception as exc:  # 网络异常统一转成错误载荷
+            payload = {"error": "E_NETWORK", "message": str(exc)}
+        if message.correlation_id:
+            try:
+                self._bus.reply(message, payload)
+            except Exception:
+                pass
+
     def shutdown(self) -> None:
+        try:
+            self._network.close()
+        except Exception:
+            pass
         for extension_id, context in list(self._contexts.items()):
             module = self._modules.get(extension_id)
             try:
@@ -455,6 +511,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--install-dir", required=True)
     parser.add_argument("--storage-dir", required=True)
     parser.add_argument("--dev-dir", action="append", default=[], help="开发中的扩展目录，可重复")
+    parser.add_argument("--settings", default="{}", help="宿主侧设置 JSON（网络代理等）")
     parser.add_argument("--debug", action="store_true", help="debugpy 监听，等待 VS Code attach")
     parser.add_argument("--debug-port", type=int, default=5678)
     parser.add_argument("--no-debug-wait", action="store_true")
@@ -475,6 +532,7 @@ def main(argv: list[str] | None = None) -> int:
         Path(args.storage_dir),
         Path(args.system_dir) if args.system_dir else None,
         [Path(item) for item in args.dev_dir],
+        json.loads(args.settings or "{}"),
     )
     client.frame_received.connect(host.receive_frame)
     client.connected.connect(host.start)
