@@ -962,10 +962,12 @@ class OboxApp:
                 value = self._settings.get(key, spec.get("default", ""))
                 item: dict[str, Any] = {
                     "key": key,
-                    "title": self.i18n.translate(str(spec.get("title", name)), extension_id),
+                    "title": self._localized(f"config.{name}", extension_id, str(spec.get("title", name))),
                     "type": str(spec.get("type", "string")),
                     "value": value,
-                    "description": self.i18n.translate(str(spec.get("description", "")), extension_id),
+                    "description": self._localized(
+                        f"config.{name}.desc", extension_id, str(spec.get("description", ""))
+                    ),
                 }
                 if item["type"] == "bool":
                     item["checked"] = "true" if bool(value) else "false"
@@ -1181,15 +1183,22 @@ class OboxApp:
         except Exception as exc:
             print(f"[obox] 视图数据注入失败：{exc}", file=sys.stderr)
 
+    def _localized(self, entry_id: str, owner: str, fallback: str) -> str:
+        """按扩展命名空间取约定键的文案；没有注册就回退清单里的原文。"""
+        if not owner:
+            return fallback
+        text = self.i18n.translate("{{i18n." + entry_id + "}}", owner)
+        return fallback if text.startswith("{{i18n.") else text
+
     def _view_payload(self, app: dict[str, Any]) -> dict[str, Any]:
         owner = str(app.get("extension_id") or "")
 
         def text(value: Any) -> str:
-            return self.i18n.translate(str(value or ""), owner) if owner else str(value or "")
+            return str(value or "")
 
         return {
             "id": app["id"],
-            "title": text(app.get("title", "")),
+            "title": self._localized("app.title", owner, text(app.get("title", ""))),
             "icon": app.get("icon", ""),
             "meta": text(app.get("meta", "")),
             "description": text(app.get("description", "")),
@@ -1475,9 +1484,7 @@ class OboxApp:
         self._app_counter += 1
         window_id = app_id if single else f"{app_id}#{self._app_counter}"
         title_owner = str(app.get("extension_id") or "")
-        window_title = str(app.get("title") or app_id)
-        if title_owner:
-            window_title = self.i18n.translate(window_title, title_owner)
+        window_title = self._localized("app.title", title_owner, str(app.get("title") or app_id))
         window = AppWindow(window_title, persistent=persistent)
         application = QApplication.instance()
         if application is not None and not application.windowIcon().isNull():
