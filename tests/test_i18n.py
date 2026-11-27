@@ -80,7 +80,8 @@ def test_every_bundle_covers_four_languages() -> None:
 
     root = Path(__file__).resolve().parent.parent
     bundles = [root / "obox" / "i18n.json", *sorted((root / "extensions").glob("*/i18n.json"))]
-    assert len(bundles) >= 9
+    # 仓里只有 obox 与系统扩展（app/settings/management），用户扩展在各自仓库、不入主仓
+    assert len(bundles) >= 4
     for path in bundles:
         entries = parse_document(json.loads(path.read_text(encoding="utf-8")), str(path))
         for entry_id, values in entries.items():
