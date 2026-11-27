@@ -9,10 +9,20 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
+def executable_path() -> Path | None:
+    """安装态可执行文件；源码态的 python.exe 返回 None。"""
+    candidate = Path(sys.executable)
+    if candidate.name.lower() in ("python.exe", "pythonw.exe", "python3.exe", "python3.12.exe"):
+        return None
+    return candidate.resolve()
+
+
 def is_installed() -> bool:
     if os.environ.get("OBOX_INSTALLED") == "1":
         return True
     if getattr(sys, "frozen", False):
+        return True
+    if executable_path() is not None:
         return True
     return "__compiled__" in globals()
 
@@ -87,7 +97,8 @@ def resolve(program_dir: Path | None = None, data_dir: Path | None = None) -> Ru
         if env_program:
             program_dir = Path(env_program)
         elif installed:
-            program_dir = Path(sys.executable).resolve().parent
+            exe = executable_path()
+            program_dir = exe.parent if exe is not None else Path(sys.executable).resolve().parent
         else:
             program_dir = Path(__file__).resolve().parent.parent
     if data_dir is None:
