@@ -39,12 +39,14 @@ class Binding:
         expression: str,
         scope: dict[str, Any],
         setter: str = "",
+        translator: Any = None,
     ) -> None:
         self.component = component
         self.kind = kind
         self.expression = expression
         self.scope = dict(scope)
         self.setter = setter
+        self.translator = translator
         self.view: ViewHandle | None = None
 
     def apply(self) -> None:
@@ -56,7 +58,10 @@ class Binding:
         except Exception:
             return
         if self.kind == "text":
-            self.component.set_text(format_value(value))
+            text = format_value(value)
+            if self.translator is not None and "{{i18n." in text:
+                text = self.translator(text)
+            self.component.set_text(text)
         elif self.kind == "path":
             self.component.set_path(format_value(value))
         elif self.kind in ("value", "checked") and self.setter:

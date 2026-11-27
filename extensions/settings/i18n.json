@@ -1,22 +1,14 @@
 {
-  "settings.title": [
-    {
-      "lang": "zh-CN",
-      "value": "设置"
-    },
-    {
-      "lang": "en-US",
-      "value": "Settings"
-    }
-  ],
-  "settings.search": [
-    {
-      "lang": "zh-CN",
-      "value": "搜索设置"
-    },
-    {
-      "lang": "en-US",
-      "value": "Search settings"
-    }
-  ]
+  "settings.title": {
+    "zh-CN": "设置",
+    "zh-HK": "設定",
+    "zh-TW": "設定",
+    "en-US": "Settings"
+  },
+  "settings.search": {
+    "zh-CN": "搜索设置",
+    "zh-HK": "搜尋設定",
+    "zh-TW": "搜尋設定",
+    "en-US": "Search settings"
+  }
 }

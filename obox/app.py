@@ -49,9 +49,17 @@ from .api.settings import (
 from .api.view import VIEW_DATA_MSG, VIEW_SCROLL_MSG, anchor_changed_message
 from .api.message import OB_BOX, Message
 from . import __version__
-from .i18n import DEFAULT_LANGUAGE, I18nError, I18nRegistry, parse_document
+from .i18n import (
+    DEFAULT_LANGUAGE,
+    SUPPORTED_LANGUAGES,
+    I18nError,
+    I18nRegistry,
+    normalize_language,
+    parse_document,
+)
 from .runtime import resolve as resolve_paths
 from .oml import OmlError, is_oml, load_oml
+from .core import autostart
 from .ui.close_action import CLOSE_ACTIONS, decide_close
 from .ui import palette
 from .ui.anchor import AnchorController
@@ -118,7 +126,11 @@ class OboxApp:
         self.extensions_root = Path(extensions_dir) if extensions_dir else project_root / "extensions"
         self.theme_name = theme or self._configured_theme() or DEFAULT_THEME
         self._kit_dir: Path | None = None
-        self.language = language or self._configured_language() or DEFAULT_LANGUAGE
+        stored_language = self._configured_language()
+        explicit_language = normalize_language(language)
+        self.language = explicit_language or normalize_language(stored_language) or DEFAULT_LANGUAGE
+        if not explicit_language and stored_language and stored_language != self.language:
+            self._migrate_language(self.language)
         self.i18n = I18nRegistry(self.language)
         self._register_shell_i18n()
         self.provider: Any = provider or self._load_kit(self.theme_name)
@@ -209,6 +221,31 @@ class OboxApp:
         self.supervisor.start()
         self._watch_extensions()
         self._setup_tray()
+        self._sync_autostart()
+
+    def _sync_autostart(self) -> None:
+        """配置里开着自启动但注册表没有（被外部清理过）时补写一次。"""
+        if not autostart.is_supported():
+            return
+        if self._settings.get("obox.autostart") and not autostart.is_enabled():
+            autostart.set_enabled(True)
+
+    def _migrate_language(self, code: str) -> None:
+        """把旧配置里的地区标签一次性改写成 BCP-47 码，顶层与 settings 段一起改。"""
+        data = self._load_config()
+        changed = data.get("language") != code
+        settings = dict(data.get("settings") or {})
+        if settings.get("obox.language") != code:
+            settings["obox.language"] = code
+            changed = True
+        data["language"] = code
+        data["settings"] = settings
+        if not changed:
+            return
+        try:
+            self._save_config(data)
+        except OSError as exc:
+            print(f"[obox] 语言迁移写盘失败：{exc}", file=sys.stderr)
 
     def _configured_theme(self) -> str:
         if not self.config_path.exists():
@@ -268,6 +305,9 @@ class OboxApp:
         self._app_windows.clear()
         self._app_specs.clear()
         self.window.retranslate()
+        if self._tray is not None:
+            self._tray.retranslate()
+            self._refresh_tray()
         self.window.clear_views()
         for owner in {spec["extension_id"] for spec in self._view_specs.values()}:
             self.registry.unregister_owner(owner)
@@ -295,7 +335,7 @@ class OboxApp:
             provider = self._load_kit(name)
         except OboxError as exc:
             print(f"[obox] 切换主题失败：{exc}", file=sys.stderr)
-            self.window.notify_warning("切换主题失败", str(exc))
+            self.window.notify_warning(self._t("notify.theme.failed"), str(exc))
             return False
         current = self.window.current_view_id()
         self.provider = provider
@@ -401,7 +441,7 @@ class OboxApp:
             return
         target = Path(self._normalize_dev_path(path))
         if not (target / "extension.json").is_file():
-            self.window.notify_warning("开发扩展", f"不是扩展目录：{target}")
+            self.window.notify_warning(self._t("notify.dev.extension"), f"{self._t('notify.not.dir')}：{target}")
             return
         if str(target) not in self._dev_extensions:
             self._dev_extensions.append(str(target))
@@ -423,13 +463,13 @@ class OboxApp:
             self._watch_timer.start(400)
 
     def _restart_extensions(self) -> None:
-        self.window.notify_warning("扩展目录变化", "正在重新加载扩展…")
+        self.window.notify_warning(self._t("notify.extensions.changed"), self._t("notify.reloading"))
         self.supervisor.restart()
 
     def _on_host_state(self, state: str, detail: str) -> None:
         print(f"[obox] 宿主状态 {state}：{detail}", file=sys.stderr)
         if state in ("disconnected", "restarting"):
-            self.window.notify_warning("扩展宿主", detail)
+            self.window.notify_warning(self._t("notify.host"), detail)
 
     def _on_extensions_ready(self, payload: dict[str, Any]) -> None:
         for extension_id, entries in (payload.get("i18n") or {}).items():
@@ -438,12 +478,18 @@ class OboxApp:
                     self.i18n.register(str(extension_id), str(entry_id), values)
                 except I18nError as exc:
                     print(f"[obox] {extension_id}.{entry_id} 注册失败：{exc}", file=sys.stderr)
-        failed = [item for item in payload.get("extensions", []) if item.get("status") != "active"]
+        failed = [
+            item
+            for item in payload.get("extensions", [])
+            if item.get("status") in ("failed", "invalid")
+        ]
         for item in failed:
             print(f"[obox] 扩展 {item.get('id')} 未激活：{item.get('error')}", file=sys.stderr)
         if failed:
-            names = "、".join(str(item.get("id")) for item in failed)
-            self.window.notify_warning("扩展未激活", names)
+            reasons = "；".join(
+                f"{item.get('id')}：{item.get('error') or self._t('notify.unknown.reason')}" for item in failed
+            )
+            self.window.notify_warning(self._t("notify.extensions.offline"), reasons)
         current_ids = {str(item.get("id")) for item in payload.get("extensions", [])}
         for key in list(self._extensions):
             if key not in current_ids:
@@ -517,7 +563,7 @@ class OboxApp:
                 source = load_oml(directory, source)
             except OmlError as exc:
                 print(f"[obox] 视图 {view.get('view_id')} 读取失败：{exc}", file=sys.stderr)
-                self.window.notify_warning("视图加载失败", str(exc))
+                self.window.notify_warning(self._t("notify.view.failed"), str(exc))
                 return None
         source = self.i18n.translate(source, owner)
         handle_out: dict[str, Any] = {}
@@ -564,7 +610,7 @@ class OboxApp:
                 root = scroll
         self.window.add_view(
             str(view["view_id"]),
-            str(view.get("title") or owner),
+            self.i18n.translate(str(view.get("title") or owner), owner),
             root,
             container,
             str(view.get("icon_path", "")),
@@ -664,6 +710,7 @@ class OboxApp:
             self._send_component_event,
             getattr(self.provider, "spacing", None),
             data=data,
+            translator=lambda text, name=owner: self.i18n.translate(text, name),
         )
         root = builder.build(nodes)
         if handle_out is not None:
@@ -731,7 +778,10 @@ class OboxApp:
     def _on_modify(self, message: ComponentModifyMessage) -> None:
         try:
             component = self._owned_component(message.src, message.id)
-            getattr(component, self._accessor(component, message.state_type, 1))(message.value)
+            value = message.value
+            if message.state_type == "text" and isinstance(value, str) and "{{i18n." in value:
+                value = self.i18n.translate(value, str(message.src))
+            getattr(component, self._accessor(component, message.state_type, 1))(value)
         except OboxError as exc:
             self._reply_error(message, exc)
             return
@@ -784,47 +834,17 @@ class OboxApp:
         return self.i18n.translate("{{i18n." + key + "}}", "obox")
 
     def language_options(self) -> list[tuple[str, str]]:
-        """全部地区：Qt 能枚举的 locale + 已注册语言，标签用原生地区名。"""
+        """设置里可选的界面语言：文案齐全的集合，顺序固定。"""
         if self._language_cache is not None:
             return list(self._language_cache)
-        from obox.qt import QLocale
-
-        items: dict[str, str] = {}
-        used: dict[str, str] = {}
-        locales = QLocale.matchingLocales(
-            QLocale.Language.AnyLanguage,
-            QLocale.Script.AnyScript,
-            QLocale.Country.AnyCountry,
-        )
-        for locale in locales:
-            code = locale.name().replace("_", "-")
-            if not code or code == "C":
-                continue
-            native = ""
-            for attribute in ("nativeTerritoryName", "nativeLanguageName"):
-                getter = getattr(locale, attribute, None)
-                if getter is not None:
-                    try:
-                        native = str(getter() or "")
-                    except TypeError:
-                        native = ""
-                if native:
-                    break
-            label = self._locale_labels.get(code) or native or code
-            label = label.replace(",", "·").strip() or code
-            if label in used and used[label] != code:
-                label = f"{label}（{code}）"
-            used.setdefault(label, code)
-            items.setdefault(code, label)
-        for code in self.i18n.languages():
-            if code in items:
-                continue
-            label = self._locale_labels.get(code, code)
-            items[code] = label
-            used.setdefault(label, code)
-        result = sorted(items.items(), key=lambda item: item[1])
-        self._language_cache = result
-        return list(result)
+        labels = {
+            "zh-CN": "简体中文",
+            "zh-HK": "繁體中文（香港）",
+            "zh-TW": "繁體中文（台灣）",
+            "en-US": "English",
+        }
+        self._language_cache = [(code, labels.get(code, code)) for code in SUPPORTED_LANGUAGES]
+        return list(self._language_cache)
 
     def language_label(self, code: str) -> str:
         for candidate, label in self.language_options():
@@ -836,7 +856,7 @@ class OboxApp:
         for code, label in self.language_options():
             if label == value:
                 return code
-        return value if value in self.i18n.languages() else ""
+        return normalize_language(value)
 
     def _settings_groups(self) -> list[dict[str, Any]]:
         groups: list[dict[str, Any]] = [
@@ -851,6 +871,20 @@ class OboxApp:
                         "value": self.close_action,
                         "options": "ask,tray,quit",
                         "description": self._t("settings.item.closeaction.desc"),
+                    },
+                    {
+                        "key": "obox.autostart",
+                        "title": self._t("settings.item.autostart"),
+                        "type": "bool",
+                        "value": bool(self._settings.get("obox.autostart", autostart.is_enabled())),
+                        "checked": "true"
+                        if self._settings.get("obox.autostart", autostart.is_enabled())
+                        else "false",
+                        "description": self._t(
+                            "settings.item.autostart.desc"
+                            if autostart.is_supported()
+                            else "settings.item.autostart.unavailable"
+                        ),
                     }
                 ],
             },
@@ -928,10 +962,10 @@ class OboxApp:
                 value = self._settings.get(key, spec.get("default", ""))
                 item: dict[str, Any] = {
                     "key": key,
-                    "title": str(spec.get("title", name)),
+                    "title": self.i18n.translate(str(spec.get("title", name)), extension_id),
                     "type": str(spec.get("type", "string")),
                     "value": value,
-                    "description": str(spec.get("description", "")),
+                    "description": self.i18n.translate(str(spec.get("description", "")), extension_id),
                 }
                 if item["type"] == "bool":
                     item["checked"] = "true" if bool(value) else "false"
@@ -992,6 +1026,8 @@ class OboxApp:
             return bool(self._language_code(str(value)))
         if key == "obox.close_action":
             return value in CLOSE_ACTIONS
+        if key == "obox.autostart":
+            return isinstance(value, bool)
         spec = self._setting_spec(key)
         if spec is None:
             return False
@@ -1020,11 +1056,23 @@ class OboxApp:
         elif key == "obox.close_action":
             self._set_close_action(str(value))
         elif key == "obox.language":
-            if not self.switch_language(self._language_code(str(value))):
+            code = self._language_code(str(value))
+            if not self.switch_language(code):
                 if message.correlation_id:
-                    self.bus.reply(message, {"ok": False, "error": "切换语言失败"})
+                    self.bus.reply(message, {"ok": False, "error": self._t("notify.language.failed")})
                 return
-            self._settings[key] = value
+            self._settings[key] = code
+            self._save_settings()
+        elif key == "obox.autostart":
+            wanted = bool(value)
+            if not autostart.set_enabled(wanted):
+                if message.correlation_id:
+                    self.bus.reply(message, {"ok": False, "error": self._t("notify.autostart.failed")})
+                self._settings.pop(key, None)
+                self._push_settings()
+                self.window.notify_warning(self._t("notify.autostart.failed"), "")
+                return
+            self._settings[key] = wanted
             self._save_settings()
         else:
             self._settings[key] = value
@@ -1134,12 +1182,17 @@ class OboxApp:
             print(f"[obox] 视图数据注入失败：{exc}", file=sys.stderr)
 
     def _view_payload(self, app: dict[str, Any]) -> dict[str, Any]:
+        owner = str(app.get("extension_id") or "")
+
+        def text(value: Any) -> str:
+            return self.i18n.translate(str(value or ""), owner) if owner else str(value or "")
+
         return {
             "id": app["id"],
-            "title": app.get("title", ""),
+            "title": text(app.get("title", "")),
             "icon": app.get("icon", ""),
-            "meta": app.get("meta", ""),
-            "description": app.get("description", ""),
+            "meta": text(app.get("meta", "")),
+            "description": text(app.get("description", "")),
         }
 
     def _apps_payload(self) -> list[dict[str, Any]]:
@@ -1238,7 +1291,7 @@ class OboxApp:
             return False
         source = Path(package)
         if not source.is_file():
-            self.window.notify_warning("安装扩展失败", f"文件不存在：{package}")
+            self.window.notify_warning(self._t("notify.install.failed"), f"{self._t('notify.file.missing')}：{package}")
             return False
         incoming = self.data_dir / "extensions" / "incoming"
         incoming.mkdir(parents=True, exist_ok=True)
@@ -1248,7 +1301,7 @@ class OboxApp:
         try:
             shutil.copyfile(source, target)
         except OSError as exc:
-            self.window.notify_warning("安装扩展失败", str(exc))
+            self.window.notify_warning(self._t("notify.install.failed"), str(exc))
             return False
         self.bus.send(install_extension_message(target.name))
         return True
@@ -1368,7 +1421,7 @@ class OboxApp:
         if self._progress_dialog is None:
             return
         self._close_progress()
-        self.window.notify_warning("安装扩展超时", "宿主没有在 30 秒内返回结果，请查看日志或重试")
+        self.window.notify_warning(self._t("notify.install.timeout"), self._t("notify.install.timeout.body"))
 
     def _close_progress(self) -> None:
         dialog = self._progress_dialog
@@ -1385,18 +1438,21 @@ class OboxApp:
             self._close_progress()
         if payload.get("ok"):
             labels = {
-                "install": "扩展已安装并激活",
-                "remove": "扩展已卸载",
-                "toggle": "扩展状态已更新",
+                "install": self._t("notify.installed"),
+                "remove": self._t("notify.removed"),
+                "toggle": self._t("notify.toggled"),
             }
-            self.window.notify_warning(labels.get(action, "扩展操作完成"), extension_id or "")
+            self.window.notify_warning(labels.get(action, self._t("notify.op.done")), extension_id or "")
             return
         labels = {
-            "install": "安装扩展失败",
-            "remove": "卸载扩展失败",
-            "toggle": "扩展状态更新失败",
+            "install": self._t("notify.install.failed"),
+            "remove": self._t("notify.remove.failed"),
+            "toggle": self._t("notify.toggle.failed"),
         }
-        self.window.notify_warning(labels.get(action, "扩展操作失败"), str(payload.get("error") or "未知原因"))
+        self.window.notify_warning(
+            labels.get(action, self._t("notify.op.failed")),
+            str(payload.get("error") or self._t("notify.unknown.reason")),
+        )
 
     def _on_app_launch(self, message: Any) -> None:
         payload = message.payload or {}
@@ -1418,7 +1474,11 @@ class OboxApp:
                     self._app_windows.pop(app_id, None)
         self._app_counter += 1
         window_id = app_id if single else f"{app_id}#{self._app_counter}"
-        window = AppWindow(str(app.get("title") or app_id), persistent=persistent)
+        title_owner = str(app.get("extension_id") or "")
+        window_title = str(app.get("title") or app_id)
+        if title_owner:
+            window_title = self.i18n.translate(window_title, title_owner)
+        window = AppWindow(window_title, persistent=persistent)
         application = QApplication.instance()
         if application is not None and not application.windowIcon().isNull():
             window.setWindowIcon(application.windowIcon())
@@ -1490,7 +1550,7 @@ class OboxApp:
     def _setup_tray(self) -> None:
         if not TrayIcon.available():
             return
-        self._tray = TrayIcon(self.window.windowIcon(), self.window)
+        self._tray = TrayIcon(self.window.windowIcon(), self.window, translator=self._t)
         self._tray.show_requested.connect(self._restore_window)
         self._tray.settings_requested.connect(self._open_settings)
         self._tray.quit_requested.connect(self._quit)
@@ -1506,7 +1566,7 @@ class OboxApp:
         tray = self._tray
         if tray is None:
             return
-        labels_by_mode = {"light": "浅色", "dark": "深色"}
+        labels_by_mode = {"light": self._t("theme.light"), "dark": self._t("theme.dark")}
         themes = [
             (kit.name, labels_by_mode.get(kit.mode, kit.name))
             for kit in scan_themes([self.themes_root, self.user_themes_root])
@@ -1560,7 +1620,7 @@ class OboxApp:
             self._restore_view(target)
         if self._tray is not None:
             self._tray.set_enabled(True)
-        self.window.notify_warning("扩展已刷新", "宿主已重启，视图已恢复")
+        self.window.notify_warning(self._t("notify.refreshed"), self._t("notify.refreshed.body"))
 
     def _restore_window(self) -> None:
         self.window.show()
@@ -1573,7 +1633,7 @@ class OboxApp:
 
     def _on_close_requested(self) -> None:
         if self.close_action == "ask":
-            dialog = CloseDialog(self.window)
+            dialog = CloseDialog(self.window, translator=self._t)
             accepted = bool(dialog.exec())
             final, persisted = decide_close("ask", dialog.choice, dialog.remember)
             if persisted:

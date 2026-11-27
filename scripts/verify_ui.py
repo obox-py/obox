@@ -329,17 +329,18 @@ def main(argv: list[str] | None = None) -> int:
         }
         check("设置页有界面语言项", "obox.language" in language_items, str(language_items))
 
+        codes = [code for code, _label in obox.language_options()]
+        check("语言清单为四种", codes == ["zh-CN", "zh-HK", "zh-TW", "en-US"], str(codes))
         hk_label = obox.language_label("zh-HK")
-        check("语言项显示原生名", hk_label == "中国香港", hk_label)
         obox._on_settings_set(
             SimpleNamespace(payload={"key": "obox.language", "value": hk_label}, correlation_id="")
         )
         check("切到 zh-HK", obox.i18n.language == "zh-HK", obox.i18n.language)
-        fallback_title = driver.wait_until(
-            lambda: obox.registry.lookup("demo.chenzhi", "demo-title").text() == "obox 示范扩展",
+        hk_title = driver.wait_until(
+            lambda: obox.registry.lookup("demo.chenzhi", "demo-title").text() == "obox 示範擴充功能",
             timeout=6,
         )
-        check("zh-HK 回退 zh-CN", fallback_title, obox.i18n.language)
+        check("zh-HK 文案已替换", hk_title, obox.registry.lookup("demo.chenzhi", "demo-title").text())
         obox._on_settings_set(
             SimpleNamespace(payload={"key": "obox.language", "value": "zh-CN"}, correlation_id="")
         )

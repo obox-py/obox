@@ -1,26 +1,116 @@
 {
-  "title": [
-    {"lang": "zh-CN", "value": "扩展"},
-    {"lang": "en-US", "value": "Extensions"}
-  ],
-  "install": [
-    {"lang": "zh-CN", "value": "安装扩展"},
-    {"lang": "en-US", "value": "Install extension"}
-  ],
-  "search": [
-    {"lang": "zh-CN", "value": "搜索扩展"},
-    {"lang": "en-US", "value": "Search extensions"}
-  ],
-  "empty": [
-    {"lang": "zh-CN", "value": "没有匹配的扩展"},
-    {"lang": "en-US", "value": "No matching extensions"}
-  ],
-  "installing": [
-    {"lang": "zh-CN", "value": "正在安装，稍候…"},
-    {"lang": "en-US", "value": "Installing…"}
-  ],
-  "remove": [
-    {"lang": "zh-CN", "value": "卸载"},
-    {"lang": "en-US", "value": "Uninstall"}
-  ]
+  "title": {
+    "zh-CN": "扩展",
+    "zh-HK": "擴充功能",
+    "zh-TW": "擴充功能",
+    "en-US": "Extensions"
+  },
+  "install": {
+    "zh-CN": "安装扩展",
+    "zh-HK": "安裝擴充功能",
+    "zh-TW": "安裝擴充功能",
+    "en-US": "Install extension"
+  },
+  "search": {
+    "zh-CN": "搜索扩展",
+    "zh-HK": "搜尋擴充功能",
+    "zh-TW": "搜尋擴充功能",
+    "en-US": "Search extensions"
+  },
+  "empty": {
+    "zh-CN": "没有匹配的扩展",
+    "zh-HK": "沒有匹配的擴充功能",
+    "zh-TW": "沒有匹配的擴充功能",
+    "en-US": "No matching extensions"
+  },
+  "installing": {
+    "zh-CN": "正在安装，稍候…",
+    "zh-HK": "正在安裝，稍候…",
+    "zh-TW": "正在安裝，稍候…",
+    "en-US": "Installing…"
+  },
+  "remove": {
+    "zh-CN": "卸载",
+    "zh-HK": "解除安裝",
+    "zh-TW": "解除安裝",
+    "en-US": "Uninstall"
+  },
+  "manage.title": {
+    "zh-CN": "扩展",
+    "zh-HK": "擴充功能",
+    "zh-TW": "擴充功能",
+    "en-US": "Extensions"
+  },
+  "manage.origin.user": {
+    "zh-CN": "用户安装",
+    "zh-HK": "用戶安裝",
+    "zh-TW": "用戶安裝",
+    "en-US": "User installed"
+  },
+  "manage.origin.system": {
+    "zh-CN": "内置",
+    "zh-HK": "內置",
+    "zh-TW": "內置",
+    "en-US": "Built-in"
+  },
+  "manage.origin.source": {
+    "zh-CN": "源码",
+    "zh-HK": "源碼",
+    "zh-TW": "源碼",
+    "en-US": "Source"
+  },
+  "manage.status.active": {
+    "zh-CN": "激活",
+    "zh-HK": "激活",
+    "zh-TW": "激活",
+    "en-US": "Active"
+  },
+  "manage.status.failed": {
+    "zh-CN": "失败",
+    "zh-HK": "失败",
+    "zh-TW": "失败",
+    "en-US": "Failed"
+  },
+  "manage.status.disabled": {
+    "zh-CN": "已禁用",
+    "zh-HK": "已停用",
+    "zh-TW": "已停用",
+    "en-US": "Disabled"
+  },
+  "manage.action.enable": {
+    "zh-CN": "启用",
+    "zh-HK": "啟用",
+    "zh-TW": "啟用",
+    "en-US": "Enable"
+  },
+  "manage.action.disable": {
+    "zh-CN": "禁用",
+    "zh-HK": "停用",
+    "zh-TW": "停用",
+    "en-US": "Disable"
+  },
+  "manage.remove.message": {
+    "zh-CN": "卸载扩展",
+    "zh-HK": "解除安裝擴充功能",
+    "zh-TW": "解除安裝擴充功能",
+    "en-US": "Uninstall extension"
+  },
+  "manage.remove.detail": {
+    "zh-CN": "卸载后扩展目录会从数据目录移除。",
+    "zh-HK": "解除安裝後擴充功能目錄會從數據目錄移除。",
+    "zh-TW": "解除安裝後擴充功能目錄會從數據目錄移除。",
+    "en-US": "The extension folder is removed from the data directory."
+  },
+  "manage.remove.ok": {
+    "zh-CN": "卸载",
+    "zh-HK": "解除安裝",
+    "zh-TW": "解除安裝",
+    "en-US": "Uninstall"
+  },
+  "manage.remove.cancel": {
+    "zh-CN": "取消",
+    "zh-HK": "取消",
+    "zh-TW": "取消",
+    "en-US": "Cancel"
+  }
 }

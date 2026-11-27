@@ -55,4 +55,4 @@ scripts/verify_ui.py 里已自动化的断言：
 
 ## 语言场景（11）
 
-标题栏的语言按钮已移除，语言入口只在设置页：脚本先断言标题栏没有 `obox-lang` 按钮、设置页有 `obox.language` 项，再直接调 `obox._on_settings_set({"key": "obox.language", "value": "en-US"})`（等价于点该设置项）切英文，断言 `demo-title` 变为 `obox demo extension` 后截图 `{theme}_11_lang_en`，最后切回 zh-CN。
+标题栏的语言按钮已移除，语言入口只在设置页：脚本先断言标题栏没有 `obox-lang` 按钮、设置页有 `obox.language` 项，再断言语言清单正好是 `["zh-CN", "zh-HK", "zh-TW", "en-US"]`、按中文标签取到 `obox.language_label("zh-HK")`，直接调 `obox._on_settings_set({"key": "obox.language", "value": <标签>})` 切 zh-HK，断言 `demo-title` 变为 `obox 示範擴充功能`（四种语言都齐，不再回退）；再切 en-US，断言变为 `obox demo extension` 后截图 `{theme}_11_lang_en`，最后切回 zh-CN。

@@ -2,9 +2,21 @@
 
 from __future__ import annotations
 
+from typing import Callable
+
 from obox.qt import QObject, Qt, Signal
 from obox.qt import QIcon
 from obox.qt import QMenu, QSystemTrayIcon
+
+_DEFAULTS = {
+    "tray.show": "打开 obox 窗口",
+    "tray.theme": "切换主题",
+    "tray.language": "切换语言",
+    "tray.reload": "刷新扩展",
+    "tray.opendir": "打开扩展目录",
+    "tray.settings": "设置",
+    "tray.quit": "退出",
+}
 
 
 class TrayIcon(QObject):
@@ -16,24 +28,30 @@ class TrayIcon(QObject):
     theme_requested = Signal(str)
     language_requested = Signal(str)
 
-    def __init__(self, icon: QIcon, parent: QObject | None = None) -> None:
+    def __init__(
+        self,
+        icon: QIcon,
+        parent: QObject | None = None,
+        translator: Callable[[str], str] | None = None,
+    ) -> None:
         super().__init__(parent)
+        self._translator = translator
         self._tray = QSystemTrayIcon(icon, parent)
         self._tray.setToolTip("obox")
         menu = QMenu()
         menu.setObjectName("obox-tray-menu")
         menu.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
-        self._show_action = menu.addAction("打开 obox 窗口")
+        self._show_action = menu.addAction(self._label("tray.show"))
         menu.addSeparator()
-        self._theme_menu = menu.addMenu("切换主题")
+        self._theme_menu = menu.addMenu(self._label("tray.theme"))
         self._theme_menu.setObjectName("obox-tray-menu")
-        self._language_menu = menu.addMenu("切换语言")
+        self._language_menu = menu.addMenu(self._label("tray.language"))
         self._language_menu.setObjectName("obox-tray-menu")
-        self._reload_action = menu.addAction("刷新扩展")
-        self._open_action = menu.addAction("打开扩展目录")
+        self._reload_action = menu.addAction(self._label("tray.reload"))
+        self._open_action = menu.addAction(self._label("tray.opendir"))
         menu.addSeparator()
-        self._settings_action = menu.addAction("设置")
-        self._quit_action = menu.addAction("退出")
+        self._settings_action = menu.addAction(self._label("tray.settings"))
+        self._quit_action = menu.addAction(self._label("tray.quit"))
         self._show_action.triggered.connect(self.show_requested.emit)
         self._reload_action.triggered.connect(self.reload_requested.emit)
         self._open_action.triggered.connect(self.open_extensions_requested.emit)
@@ -42,6 +60,22 @@ class TrayIcon(QObject):
         self._tray.setContextMenu(menu)
         self._menu = menu
         self._tray.activated.connect(self._on_activated)
+
+    def _label(self, key: str) -> str:
+        text = self._translator(key) if self._translator else ""
+        if not text or text.startswith("{{"):
+            return _DEFAULTS.get(key, key)
+        return text
+
+    def retranslate(self) -> None:
+        """语言切换后改写常驻菜单项的文案。"""
+        self._show_action.setText(self._label("tray.show"))
+        self._theme_menu.setTitle(self._label("tray.theme"))
+        self._language_menu.setTitle(self._label("tray.language"))
+        self._reload_action.setText(self._label("tray.reload"))
+        self._open_action.setText(self._label("tray.opendir"))
+        self._settings_action.setText(self._label("tray.settings"))
+        self._quit_action.setText(self._label("tray.quit"))
 
     @staticmethod
     def available() -> bool:

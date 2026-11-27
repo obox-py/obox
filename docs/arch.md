@@ -149,9 +149,11 @@ flowchart TB
 | 应用页 | 系统扩展 extensions/app 提供网格，obox 管理应用窗口 | obox/ui/app_window.py、obox/app.py | 扩展宿主、模板引擎 |
 | 设置 | 系统扩展 extensions/settings 渲染两栏设置页；obox 汇总内置项与扩展配置并持久化 | obox/app.py、obox/api/settings.py | 扩展宿主、模板引擎 |
 | Agent 技能 | .agents/skills 下四个技能与脚本，覆盖扩展、主题、界面验证、测试 | .agents/skills | scripts/、codespec |
+| 程序目录 | 安装态取 obox.exe 父目录，源码态取仓库根；OBOX_PROGRAM_DIR 可覆盖 | obox/runtime.py | 文件系统 |
 | 安装包 | Nuitka standalone + NSIS；程序目录含 .theme 与系统扩展，数据目录在 LOCALAPPDATA | scripts/build_exe.py、build_installer.py、installer/obox.nsi | obox/runtime.py |
 | 托盘与单实例 | 按用户命名管道互斥与唤醒；托盘菜单；关闭询问/最小化/退出 | obox/ui/single_instance.py、tray.py、close_dialog.py、obox/app.py | 设置服务 |
-| i18n 注册表 | 按扩展标识与条目 id 存多语言文案，渲染前替换占位符 | obox/i18n.py | obox/api、obox/core |
+| 开机自启动 | 读写当前用户 Run 键，仅打包运行可用，失败以返回值回报 | obox/core/autostart.py | 标准库 winreg |
+| i18n 注册表 | 按扩展标识与条目 id 存多语言文案，渲染前替换占位符；四种固定语言与标签归一 | obox/i18n.py | obox/api、obox/core |
 | OML 视图 | 读取扩展目录下的 .oml，拒绝越界与缺失 | obox/oml.py | 文件系统 |
 | 消息通道 | 路由消息、维护关联、承载进程间帧 | obox/core、obox/api | QtNetwork |
 | 扩展系统 | 发现、校验、激活扩展，管理宿主进程与注册点；支持 dev 目录与 debugpy 启动 | obox/extensions | obox/api、obox/core |
@@ -453,7 +455,13 @@ graph TB
 - **控件边界**：扩展只能操作自己命名空间下的组件，越权直接拒绝。
 - **样式边界**：扩展 QSS 经过选择器白名单过滤后才会被应用。
 
-### 7.6 资源目录与双架构产物
+### 7.6 开机自启动与注册表
+
+- 安装版运行时，设置 → 行为 的「开机自启动」在 HKCU\Software\Microsoft\Windows\CurrentVersion\Run 写一条名为 obox 的值，数据为 obox.exe 的绝对路径；关闭开关即删除该值。
+- 源码运行（未打包）不写注册表，开关显示为不可用；启动时若配置为开但注册表缺失，会补写一次。
+- 卸载清理由安装器负责，运行期不触碰安装目录。
+
+### 7.7 资源目录与双架构产物
 
 - 运行期资源：安装目录 themes/ 与 extensions/ 提供系统主题与系统扩展；数据目录 themes/ 与 extensions/ 提供用户覆盖与安装的扩展；同名时用户目录优先，源码态开发沿用 .theme 与 extensions/。
 - 构建产物：主题编译为 themes/{name}/{name}.pyd 目录，系统扩展（app、settings、management）编译为 extensions/{id}/extension.pyd 目录，随 NSIS 安装包分发；用户扩展独立仓产 oix，按 x86_64/arm64 各一份。

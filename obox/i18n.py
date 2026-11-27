@@ -5,7 +5,15 @@ from __future__ import annotations
 import re
 
 DEFAULT_LANGUAGE = "zh-CN"
+SUPPORTED_LANGUAGES = ("zh-CN", "zh-HK", "zh-TW", "en-US")
 BASE_DEFAULTS = {"zh": "zh-CN", "en": "en-US"}
+# 旧配置里存的是地区标签，启动时按这张表映射回 BCP-47 码。
+LANGUAGE_LABELS = {
+    "中国大陆": "zh-CN",
+    "中国香港": "zh-HK",
+    "中国台湾": "zh-TW",
+    "America": "en-US",
+}
 _PLACEHOLDER = re.compile(r"\{\{i18n\.([A-Za-z0-9_.-]+)\}\}")
 _ID_PATTERN = re.compile(r"^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)*$")
 
@@ -17,6 +25,23 @@ class I18nError(Exception):
 def is_valid_id(entry_id: str) -> bool:
     """id 形如 title、dialog.ok：小写字母开头，段内小写字母与数字，点分段。"""
     return bool(_ID_PATTERN.match(entry_id or ""))
+
+
+def normalize_language(value: str) -> str:
+    """地区标签或语言码归一到支持的语言码；不认识的返回空串。"""
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if text in SUPPORTED_LANGUAGES:
+        return text
+    mapped = LANGUAGE_LABELS.get(text)
+    if mapped:
+        return mapped
+    lowered = text.replace("_", "-").lower()
+    for code in SUPPORTED_LANGUAGES:
+        if code.lower() == lowered:
+            return code
+    return ""
 
 
 def parse_document(data: object, source: str = "") -> dict[str, dict[str, str]]:

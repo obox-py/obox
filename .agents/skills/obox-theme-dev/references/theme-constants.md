@@ -5,7 +5,7 @@
 | 常量 | 用途 |
 |---|---|
 | BACKGROUND / SURFACE / SURFACE_MUTED | 背景、卡片面、弱背景 |
-| TEXT / TEXT_MUTED | 正文、辅助文字 |
+| TEXT / TEXT_MUTED | 正文与标题、辅助文字；light 的 TEXT 为纯黑 #000000，TEXT_MUTED 保持 #86909c |
 | LINE | 细分隔线（10% 左右） |
 | ACCENT / ACCENT_TEXT / ACCENT_SOFT | 强调色、强调底上的文字、强调淡底 |
 | CARD_SURFACE / CARD_BORDER | 卡片面与可见描边 |

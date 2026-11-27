@@ -57,6 +57,8 @@ obox 面向需要「桌面外壳 + 第三方功能扩展」的场景：主程序
 
 ## 安装
 
+安装版以 obox.exe 所在目录作为程序目录，系统扩展在 obox.exe 同级的 extensions/ 下（app、management、settings）。
+
 ```bash
 git clone https://example.com/obox.git
 cd obox
@@ -209,11 +211,11 @@ uv run python scripts/build_installer.py           # NSIS → dist/obox-{version
 
 ## 托盘与关闭
 
-同一 Windows 用户只运行一个 obox 实例；再次启动会唤醒已有窗口。关闭窗口默认询问：最小化到托盘 / 退出 / 取消，勾选「记住我的选择」后不再询问。设置 → 行为 可改关闭行为（每次询问 / 最小化到托盘 / 直接退出）。托盘右键菜单提供显示主窗口、设置与退出。
+同一 Windows 用户只运行一个 obox 实例；再次启动会唤醒已有窗口。关闭窗口默认询问：最小化到托盘 / 退出 / 取消，勾选「记住我的选择」后不再询问。设置 → 行为 可改关闭行为（每次询问 / 最小化到托盘 / 直接退出），同一分类里还有「开机自启动」：打开后写 HKCU 的 Run 键，仅安装版可用。托盘右键菜单提供显示主窗口、设置与退出。
 
 ## 设置
 
-设置是系统扩展 extensions/settings（settings/obox/1.0.0），只注册 sidebar 视图：左侧分类（外观、语言、扩展、关于）、右侧设置项、顶部搜索。主题与语言修改即时生效并写入 `.obox/config.json` 的 settings 段；扩展可在清单里用 contributes.configuration 贡献 bool/string/enum 设置项，会自动出现在「扩展」分类。
+设置是系统扩展 extensions/settings（settings/obox/1.0.0），只注册 sidebar 视图：左侧分类（行为、外观、网络、语言、扩展、关于）、右侧设置项、顶部搜索。主题与语言修改即时生效并写入 `.obox/config.json` 的 settings 段；扩展可在清单里用 contributes.configuration 贡献 bool/string/enum 设置项，会自动出现在「扩展」分类。
 
 ## 模板指令与应用扩展
 
@@ -246,8 +248,10 @@ context.register_i18n("title", {"zh-CN": "示范扩展", "en-US": "Demo extensio
 在 oml 的属性值里写双花括号包住的 `i18n.title`，渲染时会替换成当前语言的文案。
 
 - name 是扩展标识 `名称.作者`；obox 主窗体用 `obox` 注册，扩展只能注册自己的 name
-- values 必须以 BCP-47 为 key，且必须提供 `zh-CN`；缺当前语言时回退 zh-CN，未注册的引用原样保留
-- 语言可在标题栏右侧的语言按钮里手动切换，切换后视图与外壳文案立即重建，选择写入 `.obox/config.json`
+- values 必须以 BCP-47 为 key；每条文案要四种语言齐全（zh-CN、zh-HK、zh-TW、en-US），缺当前语言时回退 zh-CN，未注册的引用原样保留
+- 设置里只列这四种语言，新增语言必须整套文案齐备才会出现
+- 扩展在 Python 里产出的文案（视图数据、组件状态修改、侧栏标题、对话框与 app 卡片标题）同样可以写 i18n 占位符，宿主会按扩展命名空间替换
+- 语言在设置 → 语言里切换，切换后视图与外壳文案立即重建，配置里存 BCP-47 码（旧配置的地区标签会在启动时迁移）
 - 启动时也可用 `uv run obox --lang en-US` 覆盖，缺省 `zh-CN`
 
 ## 扩展打包与安装

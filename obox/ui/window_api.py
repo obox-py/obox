@@ -109,6 +109,14 @@ class WindowApiService:
         window_id = str(payload.get("window_id") or payload.get("windowId") or "")
         return self._windows.get(window_id) or self._app.window
 
+    def _translate(self, message: Any, value: Any) -> str:
+        """扩展传进来的文案按它的命名空间替换 i18n 占位符。"""
+        text = str(value or "")
+        if not text:
+            return ""
+        owner = str(getattr(message, "src", "") or "")
+        return self._app.i18n.translate(text, owner) if owner else text
+
     def _notice(self, message: Any, payload: dict[str, Any]) -> dict[str, Any]:
         kind = str(payload.get("type") or "info")
         box = QMessageBox(self._parent(payload))
@@ -120,12 +128,15 @@ class WindowApiService:
                 "question": QMessageBox.Icon.Question,
             }.get(kind, QMessageBox.Icon.Information)
         )
-        box.setText(str(payload.get("message") or ""))
-        items = [str(item) for item in payload.get("items") or []]
+        box.setText(self._translate(message, payload.get("message")))
+        items = [self._translate(message, item) for item in payload.get("items") or []]
         buttons = {}
         for item in items:
             buttons[box.addButton(item, QMessageBox.ButtonRole.AcceptRole)] = item
-        box.addButton("确定" if not items else "关闭", QMessageBox.ButtonRole.RejectRole)
+        box.addButton(
+            self._app._t("dialog.ok" if not items else "dialog.close"),
+            QMessageBox.ButtonRole.RejectRole,
+        )
         box.exec()
         clicked = box.clickedButton()
         return {"item": buttons.get(clicked) if clicked is not None else None}
@@ -134,10 +145,10 @@ class WindowApiService:
         options = dict(payload.get("options") or {})
         box = QMessageBox(self._parent(payload))
         box.setWindowModality(Qt.WindowModality.WindowModal)
-        box.setWindowTitle(str(options.get("title") or ""))
-        box.setText(str(options.get("message") or ""))
+        box.setWindowTitle(self._translate(message, options.get("title")))
+        box.setText(self._translate(message, options.get("message")))
         if options.get("detail"):
-            box.setDetailedText(str(options["detail"]))
+            box.setDetailedText(self._translate(message, options["detail"]))
         box.setIcon(
             {
                 "warning": QMessageBox.Icon.Warning,
@@ -145,7 +156,7 @@ class WindowApiService:
                 "question": QMessageBox.Icon.Question,
             }.get(str(options.get("type") or "info"), QMessageBox.Icon.Information)
         )
-        button_list = [str(item) for item in options.get("buttons") or ["确定"]]
+        button_list = [self._translate(message, item) for item in options.get("buttons") or ["确定"]]
         buttons = []
         for index, label in enumerate(button_list):
             role = QMessageBox.ButtonRole.AcceptRole
@@ -153,7 +164,7 @@ class WindowApiService:
                 role = QMessageBox.ButtonRole.RejectRole
             buttons.append(box.addButton(label, role))
         if options.get("checkboxLabel"):
-            box.setCheckBox(QCheckBox(str(options["checkboxLabel"]), box))
+            box.setCheckBox(QCheckBox(self._translate(message, options["checkboxLabel"]), box))
         box.exec()
         clicked = box.clickedButton()
         response = buttons.index(clicked) if clicked in buttons else -1

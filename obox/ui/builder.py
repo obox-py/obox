@@ -36,8 +36,10 @@ class Builder:
         event_sender: EventSender | None = None,
         spacing: dict[str, int] | None = None,
         data: dict[str, Any] | None = None,
+        translator: Any = None,
     ) -> None:
         self.owner = owner
+        self.translator = translator
         self.registry = registry
         self.component_types = component_types
         self.event_sender = event_sender
@@ -128,7 +130,9 @@ class Builder:
         if has_binding(text) and hasattr(component, "set_text"):
             expression = _single_expression(text)
             if expression:
-                self._bindings.append(Binding(component, "text", expression, self._loop_scope(scope)))
+                self._bindings.append(
+                    Binding(component, "text", expression, self._loop_scope(scope), translator=self.translator)
+                )
         source = str(node.attrs.get("src") or "")
         for attribute, kind in (("value", "value"), ("checked", "checked")):
             raw = str(node.attrs.get(attribute) or "")
@@ -142,7 +146,7 @@ class Builder:
                 continue
             try:
                 self._bindings.append(
-                    Binding(component, kind, expression, self._loop_scope(scope), setter=pair[1])
+                    Binding(component, kind, expression, self._loop_scope(scope), setter=pair[1], translator=self.translator)
                 )
             except Exception:
                 continue

@@ -1,32 +1,26 @@
 {
-  "apps.title": [
-    {
-      "lang": "zh-CN",
-      "value": "应用"
-    },
-    {
-      "lang": "en-US",
-      "value": "App"
-    }
-  ],
-  "apps.empty": [
-    {
-      "lang": "zh-CN",
-      "value": "还没有应用：扩展在 extension.json 里声明 contributes.app 后会出现在这里。"
-    },
-    {
-      "lang": "en-US",
-      "value": "No apps yet: extensions appear here after declaring contributes.app."
-    }
-  ],
-  "apps.search": [
-    {
-      "lang": "zh-CN",
-      "value": "搜索应用"
-    },
-    {
-      "lang": "en-US",
-      "value": "Search apps"
-    }
-  ]
+  "apps.title": {
+    "zh-CN": "应用",
+    "zh-HK": "應用",
+    "zh-TW": "應用",
+    "en-US": "App"
+  },
+  "apps.empty": {
+    "zh-CN": "还没有应用：扩展在 extension.json 里声明 contributes.app 后会出现在这里。",
+    "zh-HK": "還沒有應用：擴充功能在 extension.json 裡聲明 contributes.app 後會出現在這裡。",
+    "zh-TW": "還沒有應用：擴充功能在 extension.json 裡聲明 contributes.app 後會出現在這裡。",
+    "en-US": "No apps yet: extensions appear here after declaring contributes.app."
+  },
+  "apps.search": {
+    "zh-CN": "搜索应用",
+    "zh-HK": "搜尋應用",
+    "zh-TW": "搜尋應用",
+    "en-US": "Search apps"
+  },
+  "app.title": {
+    "zh-CN": "应用",
+    "zh-HK": "應用",
+    "zh-TW": "應用",
+    "en-US": "Apps"
+  }
 }

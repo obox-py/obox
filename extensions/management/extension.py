@@ -10,25 +10,35 @@ from obox.api.extensions import (
 from obox.api.message import COMPONENT_EVENT_MSG
 from obox.api.view import view_data_message
 
-_SOURCE_LABELS = {"user": "用户安装", "system": "内置", "source": "源码"}
+_SOURCE_LABELS = {
+    "user": "{{i18n.manage.origin.user}}",
+    "system": "{{i18n.manage.origin.system}}",
+    "source": "{{i18n.manage.origin.source}}",
+}
 _REMOVE_PREFIX = "ext-remove-"
 _TOGGLE_PREFIX = "ext-toggle-"
 
 
 def _origin_label(origin: str) -> str:
-    return _SOURCE_LABELS.get(origin, origin or "源码")
+    return _SOURCE_LABELS.get(origin, "{{i18n.manage.origin.source}}")
 
 
 def _view_item(item: dict) -> dict:
     enabled = bool(item.get("enabled", True))
     origin = str(item.get("origin") or "source")
-    status = "已禁用" if not enabled else ("激活" if item.get("status") == "active" else "失败")
+    if not enabled:
+        status = "{{i18n.manage.status.disabled}}"
+    elif item.get("status") == "active":
+        status = "{{i18n.manage.status.active}}"
+    else:
+        status = "{{i18n.manage.status.failed}}"
     meta = " · ".join(
         part
         for part in (
             str(item.get("publisher") or ""),
             str(item.get("version") or ""),
             _origin_label(origin),
+            str(item.get("error") or ""),
         )
         if part
     )
@@ -38,7 +48,7 @@ def _view_item(item: dict) -> dict:
         "meta": meta,
         "status": status,
         "removable": origin == "user",
-        "toggle": "启用" if not enabled else "禁用",
+        "toggle": "{{i18n.manage.action.enable}}" if not enabled else "{{i18n.manage.action.disable}}",
     }
 
 
@@ -64,9 +74,9 @@ def _confirm_remove(context, extension_id: str) -> None:
             context,
             {
                 "type": "warning",
-                "message": f"卸载扩展 {extension_id}？",
-                "detail": "卸载后扩展目录会从数据目录移除。",
-                "buttons": ["卸载", "取消"],
+                "message": "{{i18n.manage.remove.message}}：" + extension_id,
+                "detail": "{{i18n.manage.remove.detail}}",
+                "buttons": ["{{i18n.manage.remove.ok}}", "{{i18n.manage.remove.cancel}}"],
                 "defaultId": 1,
                 "cancelId": 1,
             },
@@ -88,7 +98,7 @@ def _confirm_remove(context, extension_id: str) -> None:
 def activate(context) -> None:
     state = {"items": [], "query": ""}
 
-    context.register_view("extensions.main", "views/main.oml", "sidebar", "扩展")
+    context.register_view("extensions.main", "views/main.oml", "sidebar", "{{i18n.manage.title}}")
 
     def _push() -> None:
         context.send(

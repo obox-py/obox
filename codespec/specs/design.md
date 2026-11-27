@@ -116,7 +116,8 @@ obox 已按本文件落地：Python 3.12.7、PySide6 6.12.0。主程序包在 ob
 
 ### D15 扩展编译为 pyd 并打包为 .oix
 
-- 选择：打包脚本按 import 图把扩展目录内的 Python 文件逐个编译为同名 pyd，连同清单与 assets 打成 zip（.oix）；安装即解压到 .obox/extensions/{id}，加载时把目录加入 sys.path，入口优先 extension.pyd。
+- 选择：打包脚本按 import 图把扩展目录内的 Python 文件逐个编译为同名 pyd，连同清单、i18n.json、assets 与 views 打成 zip（.oix）；安装即解压到 .obox/extensions/{id}，加载时把目录加入 sys.path，入口优先 extension.pyd。
+- 约束：运行期依赖必须落在 import 图内，扩展不得用 exec 或读取兄弟源码文件的方式取数据，否则安装后会因缺文件激活失败。
 - 理由：分发物不含源码；逐文件编译与「按名字 import 兄弟模块」的运行方式一致，装进 sys.path 就能解析。
 - 否掉的替代：合并成单个 pyd（Nuitka 对非包结构支持差，且兄弟模块无法按名字 import）；只打源码 zip（隐藏不了实现）；自包含第三方库（体积与数据文件问题）。
 
@@ -129,6 +130,7 @@ obox 已按本文件落地：Python 3.12.7、PySide6 6.12.0。主程序包在 ob
 ### D43 Windows 能力封在扩展内
 
 - 选择：DPAPI、cmdkey、mstsc、Chrome 探测都由扩展自己实现（ctypes/winreg/subprocess），宿主不提供封装；非 Windows 平台先判平台并返回提示。
+- 例外：宿主自身的开机自启动由 obox/core/autostart.py 用 winreg 直接读写 HKCU Run，因为自启动指向 obox.exe 本身，宿主不启动自己就没法由扩展代管。
 - 理由：这些能力只服务个别扩展，放进宿主会扩大核心面；扩展独立发版时可各自升级。
 - 否掉的替代：宿主提供系统能力 API（跨平台抽象成本高，且宿主无权代管子进程）。
 
@@ -143,6 +145,18 @@ obox 已按本文件落地：Python 3.12.7、PySide6 6.12.0。主程序包在 ob
 - 选择：安装包与 oix 都带 x86_64/arm64 标识；oix 内入口为 extension.pyd，安装时以文件名后缀与进程架构比对，不匹配拒绝；构建用 GitHub Actions 的 windows-latest 与 windows-11-arm 矩阵。
 - 理由：pyd 与架构绑定，不能通用；托管 ARM runner 已可用，PySide6 6.12 有 win_arm64 轮子。
 - 否掉的替代：只发 x64（ARM 设备需自行编译）；发源码 zip（违背 pyd 分发）。
+
+### D46 语言集合固定为四种并统一存码
+
+- 选择：可选语言固定为 zh-CN、zh-HK、zh-TW、en-US，配置里只存 BCP-47 码，列表由宿主常量给出并用测试守护覆盖度；旧配置里的地区标签在启动时映射成码并写回。
+- 理由：QLocale 全量枚举会列出上百种语言，而文案只能覆盖有限集合，列出来却回退中文比不列更差；存码则避免标签随 Qt 本地化改名而漂移。
+- 否掉的替代：按已注册文案动态求交集（随扩展加载时序抖动）；继续用地区标签（与设置读写的场景冲突）。
+
+### D47 扩展文案由宿主按命名空间替换占位符
+
+- 选择：扩展不持有翻译表，把用户可见文案写成 i18n 占位符经消息传给宿主（视图数据、组件状态修改、侧栏标题、对话框与 app 卡片标题），宿主在渲染点按该扩展的命名空间替换；未注册的占位符原样保留。
+- 理由：翻译表只在宿主侧加载，语言切换时重建视图即可全量生效，不必重启扩展进程。
+- 否掉的替代：给扩展下发文案表（多一条同步通道，切换语言要重启宿主）；扩展自备多语言文件（与 obox/i18n.json 两套事实）。
 
 ## Risks / Trade-offs
 
@@ -219,3 +233,8 @@ obox 已按本文件落地：Python 3.12.7、PySide6 6.12.0。主程序包在 ob
 - 选择：设置页统一配置代理（enabled/proxyUrl/sslStrict/noProxy），network 默认读取；调用只保留 noProxy。HTTP/HTTPS 用 QtNetwork，TCP/SSH/SFTP 走 SOCKS5/HTTP CONNECT，UDP/QUIC 走 SOCKS5 UDP associate，ICMP 调系统 ping 且不支持代理，QUIC 用 aioquic。
 - 理由：代理策略集中，扩展不接触网络栈；协议能力差异显式报错。
 - 代价：UDP/QUIC 依赖代理服务端能力；ICMP 在代理下不可用。
+### D58 程序目录由 exe 路径推导
+
+- 选择：安装态 program_dir 取 sys.executable 的父目录；文件名是 python.exe/pythonw.exe/python3*.exe 时按源码态用仓库根；OBOX_PROGRAM_DIR 仍优先。
+- 理由：Nuitka 冻结后 __file__ 与 __compiled__ 在不同模块里不可靠，exe 路径稳定。
+- 代价：绿色版改名 python.exe 时需用环境变量覆盖。

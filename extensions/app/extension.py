@@ -21,7 +21,7 @@ def filter_apps(apps: list[dict], query: str) -> list[dict]:
 
 def activate(context) -> None:
     state = {"apps": [], "query": ""}
-    context.register_view("app.main", "views/main.oml", "main", "应用")
+    context.register_view("app.main", "views/main.oml", "main", "{{i18n.app.title}}")
 
     def _push() -> None:
         context.send(

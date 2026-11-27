@@ -242,6 +242,18 @@ obox SHALL 向扩展提供按 VS Code 风格组织的命名空间 API：window�
 - **WHEN** 扩展给 ctx.extensionId 赋值
 - **THEN** 抛出只读异常，订阅只能通过 ctx.subscriptions.add 添加
 
+### Requirement: 安装版程序目录定位
+
+安装态 obox SHALL 以可执行文件所在目录作为程序目录；源码态 SHALL 使用仓库根；OBOX_PROGRAM_DIR 仍优先。系统扩展、主题与宿主 --system-dir SHALL 从该目录派生。安装态判定不得只依赖 sys.frozen 或 __compiled__。
+
+#### Scenario: 安装版找系统扩展
+- **WHEN** obox.exe 与 extensions/app、extensions/management、extensions/settings 同级
+- **THEN** 启动后宿主激活这三个系统扩展
+
+#### Scenario: 伪造 exe 路径
+- **WHEN** 测试把 sys.executable 指向临时目录的 obox.exe
+- **THEN** resolve().program_dir 等于该临时目录
+
 ### Requirement: 扩展生命周期与上下文注入
 
 扩展宿主 SHALL 在激活时调用 extension.py 的 activate 并注入 context，在停用时调用 deactivate；context 提供扩展标识、资产目录、存储目录、消息收发与注册点能力。
@@ -509,12 +521,12 @@ obox SHALL 支持运行中切换套件：销毁现有视图并按新套件重建
 
 ### Requirement: 主题色板与文字层级
 
-两套套件 SHALL 各自提供低饱和色板：背景、表面、次级文字、分割线与强调色，强调色饱和度明显低于高饱和蓝，大面积背景不出现纯黑与纯白；文字层级只用字号与文字色阶区分。
+两套套件 SHALL 各自提供低饱和色板：背景、表面、次级文字、分割线与强调色，强调色饱和度明显低于高饱和蓝，大面积背景不出现纯黑与纯白；文字层级只用字号与文字色阶区分；light 套件的主文本（正文、标题、设置项标题、列表项、输入内容）为纯黑 #000000，说明与禁用态保留灰阶。
 
 #### Scenario: light 色板为暖白低饱和
 
 - **WHEN** 以 light 套件渲染主界面
-- **THEN** 背景是暖白、正文是中深灰、辅助文字更浅，强调色低饱和且不与背景形成刺眼对比
+- **THEN** 背景是暖白、正文与标题为纯黑、辅助文字为灰阶，强调色低饱和且不与背景形成刺眼对比
 
 #### Scenario: dark 色板为深中性灰
 
@@ -696,7 +708,7 @@ obox SHALL 区分程序目录与数据目录：安装态程序目录为 exe 所�
 
 ### Requirement: 扩展打包产物
 
-工程 SHALL 提供一条命令，分析指定扩展目录内的 import 图，把入口与关联的本地 Python 文件各自编译为同名 pyd，与 extension.json、assets 一起打成 zip，产物为 dist/名称.作者.{版本}.oix。
+工程 SHALL 提供一条命令，分析指定扩展目录内的 import 图，把入口与关联的本地 Python 文件各自编译为同名 pyd，与 extension.json、i18n.json、assets 与 views 一起打成 zip，产物为 dist/名称.作者.{版本}.oix；扩展的运行期依赖 SHALL 全部落在 import 图内或随包分发的静态文件里，不得在运行期读取未随包分发的源码文件。
 
 #### Scenario: 打包一个合法扩展
 
@@ -821,9 +833,42 @@ obox SHALL 在系统托盘显示图标：双击恢复主窗口，右键菜单提
 - **WHEN** 把关闭行为改为直接退出
 - **THEN** 关闭窗口直接退出，配置为 quit
 
+### Requirement: 开机自启动
+
+设置页「行为」分类 SHALL 提供「开机自启动」开关，默认关闭；打开时在 HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run 写入指向当前可执行文件的 obox 值，关闭时删除该值；修改即时生效并持久化到 settings.obox.autostart；以源码方式运行（非打包）时开关不可用并说明仅安装版可用。
+
+#### Scenario: 打开自启动
+
+- **WHEN** 在设置 → 行为 打开开机自启动
+- **THEN** 注册表 Run 键出现 obox 项，值为当前 obox.exe 绝对路径，配置里 settings.obox.autostart 为 true
+
+#### Scenario: 关闭自启动
+
+- **WHEN** 再次关闭该开关
+- **THEN** Run 键被删除，配置为 false，重启后不再随系统启动
+
+### Requirement: 界面文案多语言覆盖
+
+obox 自身与随安装包分发的扩展（app、settings、management、gallery、demo、chartdemo、pickerdemo、webapp、rdp）SHALL 为设置中列出的每种语言提供完整文案；托盘菜单、关闭询问对话框、toast、扩展管理页与运行期错误通知的文案 SHALL 来自各自 i18n.json，不得硬编码单一语言；扩展传给宿主的文案（视图数据、组件状态修改、侧栏标题、对话框与 app 卡片标题）里的 i18n 占位符 SHALL 由宿主按该扩展的命名空间替换，扩展不需要自备翻译表；设置的语言下拉 SHALL 只列出文案齐全的语言（当前为 zh-CN、zh-HK、zh-TW、en-US），新增语言必须整套文案齐全才入列。
+
+#### Scenario: 英文下的托盘与关闭框
+
+- **WHEN** 语言切到 en-US 后右键托盘并关闭窗口
+- **THEN** 菜单项与关闭询问按钮均为英文
+
+#### Scenario: 四种语言全覆盖
+
+- **WHEN** 依次切换 zh-CN、zh-HK、zh-TW、en-US
+- **THEN** 设置页、托盘、关闭框、扩展管理页与已装扩展界面没有硬编码中文残留，全部随语言变化
+
+#### Scenario: 扩展数据文案随语言切换
+
+- **WHEN** management 扩展把条目状态写成 i18n 占位符并随视图数据下发，当前语言为 en-US
+- **THEN** 界面显示 Active 而不是占位符原文或中文
+
 ### Requirement: 设置扩展
 
-工程 SHALL 提供系统扩展 extensions/settings（name=settings、publisher=obox、version=1.0.0）：只注册 sidebar 视图；界面仿 VSCode，左侧分类（外观、语言、扩展、关于）、右侧设置项、顶部搜索；外观与语言修改即时生效。
+工程 SHALL 提供系统扩展 extensions/settings（name=settings、publisher=obox、version=1.0.0）：只注册 sidebar 视图；界面仿 VSCode，左侧分类（行为、外观、网络、语言、扩展、关于）、右侧设置项、顶部搜索；外观、语言与行为修改即时生效。
 
 #### Scenario: 分类与设置项
 - **WHEN** 打开设置页
@@ -879,7 +924,7 @@ extension.json SHALL 支持 contributes.configuration：属性名只能是小写
 
 ### Requirement: 设置读写
 
-设置扩展 SHALL 通过 SETTINGS_SET 提交修改；obox SHALL 把值写入 .obox/config.json 的 settings 段（键为 扩展标识.属性名），并对主题与语言立即应用；写入失败时保留旧值并回报错误。
+设置扩展 SHALL 通过 SETTINGS_SET 提交修改；obox SHALL 把值写入 .obox/config.json 的 settings 段（键为 扩展标识.属性名），并对主题与语言立即应用；写入失败时保留旧值并回报错误；语言一律以 BCP-47 码存储（顶层 language 与 settings.obox.language 都是码，不是地区标签），启动时把旧配置里的地区标签一次性映射成码并写回。
 
 #### Scenario: 立即生效
 - **WHEN** 把语言改成 en-US
@@ -895,7 +940,7 @@ extension.json SHALL 支持 contributes.configuration：属性名只能是小写
 
 ### Requirement: 扩展故障隔离
 
-单个扩展激活失败 SHALL 不阻断其他扩展激活；宿主进程异常退出后，obox 重启宿主并恢复扩展。
+单个扩展激活失败 SHALL 不阻断其他扩展激活；宿主进程异常退出后，obox 重启宿主并恢复扩展；激活失败的原因 SHALL 在扩展管理页该条目上可见，通知里带扩展名与原因，不得只显示「失败」。
 
 #### Scenario: 单个扩展抛出异常
 

@@ -38,7 +38,7 @@ def _key_of(component_id: str) -> str:
 
 def activate(context) -> None:
     state = {"groups": [], "current": "", "query": ""}
-    context.register_view("settings.main", "views/main.oml", "sidebar", "设置")
+    context.register_view("settings.main", "views/main.oml", "sidebar", "{{i18n.settings.title}}")
 
     def _push() -> None:
         groups = filter_groups(state["groups"], state["query"])
